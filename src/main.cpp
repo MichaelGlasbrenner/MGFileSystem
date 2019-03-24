@@ -1,15 +1,3 @@
-
-/**
- * Simple & Stupid Filesystem.
- * 
- * Mohammed Q. Hussain - http://www.maastaar.net
- *
- * This is an example of using FUSE to build a simple filesystem. It is a part of a tutorial in MQH Blog with the title "Writing a Simple Filesystem Using FUSE in C": http://www.maastaar.net/fuse/linux/filesystem/c/2016/05/21/writing-a-simple-filesystem-using-fuse/
- *
- * License: GNU GPL
- */
- 
-//#define FUSE_USE_VERSION 30
 #define FUSE_USE_VERSION 26
 
 #define _FILE_OFFSET_BITS  64 // added by me
@@ -24,7 +12,7 @@
 
 #include "mg_operations.h"
 
-filesystem_data mg_filesystem_data;
+extern filesystem_data mg_filesystem_data;
 
 static int do_getattr( const char *path, struct stat *st )
 {
@@ -51,6 +39,12 @@ static int do_getattr( const char *path, struct stat *st )
 		st->st_mode = S_IFDIR | 0755;
 		st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
 	}
+	else if ( strcmp( path, "/mg_file_1" ) == 0)
+	{
+    mg_filesystem_data.get_attributes(path, st);
+		st->st_nlink = 1;
+		st->st_size = 1024;
+  }
 	else
 	{
 		st->st_mode = S_IFREG | 0644;
@@ -93,6 +87,10 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 		selectedText = file54Text;
 	else if ( strcmp( path, "/file349" ) == 0 )
 		selectedText = file349Text;
+  else if( strcmp( path, "/mg_file_1" ) == 0 ) // FIXME ; check if file exists
+  {
+     selectedText = mg_filesystem_data.read_file_content(path);
+  }
 	else
 		return -1;
 	
@@ -103,12 +101,6 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 	return strlen( selectedText ) - offset;
 }
 
-/*static struct fuse_operations operations = {
-    getattr	: do_getattr,
-    readdir	: do_readdir,
-    read		: do_read
-};*/
-
 
 struct hello_fuse_operations : fuse_operations
 {
@@ -117,6 +109,7 @@ struct hello_fuse_operations : fuse_operations
         getattr    = do_getattr;
         readdir    = do_readdir;
         read       = do_read;
+        write      = mg_write;
         chmod      = mg_chmod;
     }
 };

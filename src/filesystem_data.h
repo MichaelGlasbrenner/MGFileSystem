@@ -21,7 +21,16 @@ class filesystem_data
 
     public:
        filesystem_data();
+
        void list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler);
+       char* read_file_content(const char *path);
+       void get_attributes(const char* path, struct stat* st);
+
+       void set_file_mode(const char* path, mode_t new_mode);
+       void write_file_content(const char* path, const char* data, size_t size, off_t offset);
+
+    private:
+       int get_index_for_filename(const char* path);
 };
 
 
