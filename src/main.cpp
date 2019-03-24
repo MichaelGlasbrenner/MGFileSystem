@@ -39,7 +39,7 @@ static int do_getattr( const char *path, struct stat *st )
 		st->st_mode = S_IFDIR | 0755;
 		st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
 	}
-	else if ( strcmp( path, "/mg_file_1" ) == 0)
+	else if ( mg_filesystem_data.file_exists(path) == true)
 	{
     mg_filesystem_data.get_attributes(path, st);
 		st->st_nlink = 1;
@@ -111,6 +111,8 @@ struct hello_fuse_operations : fuse_operations
         read       = do_read;
         write      = mg_write;
         chmod      = mg_chmod;
+        mkdir      = mg_mkdir;
+        rename     = mg_rename;
     }
 };
 

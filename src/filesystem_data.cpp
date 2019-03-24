@@ -19,6 +19,17 @@ filesystem_data::filesystem_data()
    mg_file_1._content = "this is the content";
 
    _the_files.push_back(mg_file_1);
+
+   simple_directory root_dir;
+
+   root_dir._directory_file._path = "/";
+   root_dir._directory_file._name = "/";
+   root_dir._directory_file._mode = S_IFDIR | 0777;
+   root_dir._directory_file._content = "./\n..\nmg_file_1\n";
+
+   root_dir._contained_files.push_back( &_the_files[0] );
+
+   _the_directories.push_back(root_dir);
 }
 
 
@@ -51,6 +62,14 @@ void filesystem_data::get_attributes(const char* path, struct stat* st)
 }
 
 
+bool filesystem_data::file_exists(const char* path)
+{
+   int index = this->get_index_for_filename(path);
+   
+   return (index > 0 ? true : false);
+}
+
+
 void filesystem_data::set_file_mode(const char* path, mode_t new_mode)
 {
    int index = this->get_index_for_filename(path);
@@ -67,6 +86,14 @@ void filesystem_data::write_file_content(const char* path, const char* new_data,
    std::string string_for_writing = full_input.substr (0, size);
 
    _the_files[index]._content.insert(offset, string_for_writing); // FIXME : is this insertion what is supposed to be done ?
+}
+
+
+void filesystem_data::rename_file(const char* path, const char* new_name)
+{
+   int index = this->get_index_for_filename(path);
+
+   _the_files[index]._name = std::string(new_name);
 }
 
 
