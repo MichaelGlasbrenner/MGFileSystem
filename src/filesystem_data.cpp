@@ -44,6 +44,8 @@ void filesystem_data::list_files_in_dir(const char *path, void *buffer, fuse_fil
 
 char* filesystem_data::read_file_content(const char *path)
 {
+   printf("calling filesystem_data::read_file_content ********************************** \n");
+
    int index = this->get_index_for_filename(path);
 
    char* the_content = new char[_the_files[index]._content.length() + 1];
@@ -66,7 +68,10 @@ bool filesystem_data::file_exists(const char* path)
 {
    int index = this->get_index_for_filename(path);
    
-   return (index > 0 ? true : false);
+   printf("determining if file with path %s exists **************************\n", path);
+   printf("answer : %s ************************\n", index > 0 ? "true" : "false" );
+
+   return (index >= 0 ? true : false);
 }
 
 
@@ -89,11 +94,15 @@ void filesystem_data::write_file_content(const char* path, const char* new_data,
 }
 
 
-void filesystem_data::rename_file(const char* path, const char* new_name)
+void filesystem_data::rename_file(const char* path, const char* new_path)
 {
    int index = this->get_index_for_filename(path);
 
-   _the_files[index]._name = std::string(new_name);
+   _the_files[index]._path = std::string(new_path);
+
+   std::string new_name = std::string(new_path).erase(0 , 1); // remove beginning "/"
+
+   _the_files[index]._name = new_name;
 }
 
 
@@ -101,11 +110,29 @@ int filesystem_data::get_index_for_filename(const char* path)
 {
    for(int i=0; i < _the_files.size(); ++i)
    {
+       printf("comparing %s to %s \n", path, _the_files[i]._path.c_str() );
        if(strcmp( path, _the_files[i]._path.c_str() ) == 0)
        {
+           printf("the are equal !!!!\n");
            return i;
        }
    }
 
    return -1; // FIXME : error handling
+}
+
+
+void filesystem_data::debug()
+{
+   printf("\n\n===============  MG_FILESYSTEM DEBUG START =================================\n\n");
+
+   printf("files in filesystem_data : \n\n");
+   for(int i=0; i < _the_files.size(); ++i)
+   {
+       printf("path : %s ; name : %s ; content : %s \n", _the_files[i]._path.c_str(), _the_files[i]._name.c_str(), 
+                                                         _the_files[i]._content.c_str());
+   }
+
+
+   printf("\n\n===============  MG_FILESYSTEM DEBUG END   =================================\n\n");
 }

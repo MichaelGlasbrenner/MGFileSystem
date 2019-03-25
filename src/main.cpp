@@ -81,21 +81,24 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 	char file349Text[] = "Hello World From File349!";
 	char *selectedText = NULL;
 	
-	// ... //
-	
 	if ( strcmp( path, "/file54" ) == 0 )
+  {
 		selectedText = file54Text;
-	else if ( strcmp( path, "/file349" ) == 0 )
+  }
+  else if ( strcmp( path, "/file349" ) == 0 )
+  {    
 		selectedText = file349Text;
-  else if( strcmp( path, "/mg_file_1" ) == 0 ) // FIXME ; check if file exists
+  }
+	else if ( mg_filesystem_data.file_exists(path) == true)
   {
      selectedText = mg_filesystem_data.read_file_content(path);
   }
 	else
+  {
+    printf("file does not exist ! ************************\n");
 		return -1;
-	
-	// ... //
-	
+  }
+
 	memcpy( buffer, selectedText + offset, size );
 		
 	return strlen( selectedText ) - offset;
@@ -111,8 +114,10 @@ struct hello_fuse_operations : fuse_operations
         read       = do_read;
         write      = mg_write;
         chmod      = mg_chmod;
+        chown      = mg_chown;
         mkdir      = mg_mkdir;
         rename     = mg_rename;
+        truncate   = mg_truncate;
     }
 };
 
