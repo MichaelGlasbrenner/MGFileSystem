@@ -35,6 +35,8 @@ static int mg_mkdir (const char* path, mode_t new_mode)
 {
     printf("\n\ncalling mg_mkdir *******************************\n");
 
+    mg_filesystem_data.create_directory(path, new_mode);
+
     return 0;
 }
 
@@ -52,7 +54,7 @@ static int mg_rename(const char* path, const char* new_name)
 }
 
 
-static int mg_chown (const char *, uid_t, gid_t)
+static int mg_chown (const char* path, uid_t, gid_t)
 {
     printf("\n\ncalling mg_chown *******************************\n");
 
@@ -60,9 +62,29 @@ static int mg_chown (const char *, uid_t, gid_t)
 }
 
 
-static int mg_truncate (const char *, off_t)
+static int mg_truncate (const char* path, off_t)
 {
     printf("\n\ncalling mg_truncate *******************************\n");
+
+    return 0;
+}
+
+
+static int mg_unlink (const char* path)
+{
+    printf("\n\ncalling mg_unlink *******************************\n");
+   
+    mg_filesystem_data.remove_file(path);
+
+    return 0;
+}
+
+
+static int mg_create (const char* path, mode_t)
+{
+    printf("\n\ncalling mg_create *******************************\n");
+   
+    mg_filesystem_data.create_file(path);
 
     return 0;
 }

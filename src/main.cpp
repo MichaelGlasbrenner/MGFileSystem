@@ -57,7 +57,7 @@ static int do_getattr( const char *path, struct stat *st )
 
 static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi )
 {
-	printf( "--> Getting The List of Files of %s\n", path );
+	printf( "--> Getting The List of Files of %s ***********\n", path );
 	
 	filler( buffer, ".", NULL, 0 ); // Current Directory
 	filler( buffer, "..", NULL, 0 ); // Parent Directory
@@ -118,6 +118,8 @@ struct hello_fuse_operations : fuse_operations
         mkdir      = mg_mkdir;
         rename     = mg_rename;
         truncate   = mg_truncate;
+        unlink     = mg_unlink;
+        create     = mg_create;
     }
 };
 

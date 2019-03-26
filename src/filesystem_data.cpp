@@ -30,6 +30,17 @@ filesystem_data::filesystem_data()
    root_dir._contained_files.push_back( &_the_files[0] );
 
    _the_directories.push_back(root_dir);
+
+   simple_directory mg_dir_1;
+
+   mg_dir_1._directory_file._path = "/mg_dir_1";
+   mg_dir_1._directory_file._name = "mg_dir_1";
+   mg_dir_1._directory_file._mode = S_IFDIR | 0777;
+   mg_dir_1._directory_file._content = "./\n..\nmg_file_1\n";
+
+   _the_directories.push_back(mg_dir_1);
+
+   root_dir._contained_directories.push_back( &mg_dir_1);
 }
 
 
@@ -94,6 +105,17 @@ void filesystem_data::write_file_content(const char* path, const char* new_data,
 }
 
 
+void filesystem_data::create_directory(const char* path, mode_t new_mode)
+{
+
+    simple_directory new_dir;
+
+    new_dir._directory_file._path = std::string(path);
+
+    _the_directories.push_back(new_dir);
+}
+
+
 void filesystem_data::rename_file(const char* path, const char* new_path)
 {
    int index = this->get_index_for_filename(path);
@@ -103,6 +125,24 @@ void filesystem_data::rename_file(const char* path, const char* new_path)
    std::string new_name = std::string(new_path).erase(0 , 1); // remove beginning "/"
 
    _the_files[index]._name = new_name;
+}
+
+
+void filesystem_data::remove_file(const char* path)
+{
+   int index = this->get_index_for_filename(path);
+
+   this->debug();
+
+   if(index >= 0)
+   {
+      _the_files.erase(_the_files.begin() + index);
+   }
+
+   printf("AFTER REMOVAL =========================================\n");
+
+   this->debug();
+
 }
 
 
