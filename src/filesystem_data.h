@@ -42,6 +42,7 @@ class filesystem_data
        void rename_file(const char* path, const char* new_path);
        void create_directory(const char* path, mode_t new_mode);
        void remove_file(const char* path);
+       void create_file(const char* path, mode_t new_mode);
 
        void debug();
 

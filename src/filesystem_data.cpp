@@ -146,6 +146,21 @@ void filesystem_data::remove_file(const char* path)
 }
 
 
+void filesystem_data::create_file(const char* path, mode_t new_mode)
+{
+   simple_file new_file;
+
+   new_file._path = std::string(path);
+   new_file._name = "new_file";
+   new_file._mode = new_mode;
+   new_file._content = "";
+
+   _the_files.push_back(new_file);
+
+}
+
+
+
 int filesystem_data::get_index_for_filename(const char* path)
 {
    for(int i=0; i < _the_files.size(); ++i)

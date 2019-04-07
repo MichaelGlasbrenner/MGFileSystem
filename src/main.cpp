@@ -9,6 +9,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "mg_operations.h"
 
@@ -38,21 +39,28 @@ static int do_getattr( const char *path, struct stat *st )
 	{
 		st->st_mode = S_IFDIR | 0755;
 		st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+	
+    return 0;
 	}
 	else if ( mg_filesystem_data.file_exists(path) == true)
 	{
     mg_filesystem_data.get_attributes(path, st);
 		st->st_nlink = 1;
 		st->st_size = 1024;
+    
+    return 0; // file exists
   }
 	else
 	{
+    //  return -1;
+
 		st->st_mode = S_IFREG | 0644;
 		st->st_nlink = 1;
 		st->st_size = 1024;
+
+    return -ENOENT; // meaning "no such file or directory"
 	}
 	
-	return 0;
 }
 
 static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi )
@@ -64,9 +72,6 @@ static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, o
 	
 	if ( strcmp( path, "/" ) == 0 ) // If the user is trying to show the files/directories of the root directory show the following
 	{
-		filler( buffer, "file54", NULL, 0 );
-		filler( buffer, "file349", NULL, 0 );
-
     mg_filesystem_data.list_files_in_dir(path, buffer, filler);
 	}
 	
@@ -77,26 +82,16 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 {
 	printf( "--> Trying to read %s, %zu, %zu\n", path, offset, size );
 	
-	char file54Text[] = "Hello World From File54!";
-	char file349Text[] = "Hello World From File349!";
-	char *selectedText = NULL;
-	
-	if ( strcmp( path, "/file54" ) == 0 )
-  {
-		selectedText = file54Text;
-  }
-  else if ( strcmp( path, "/file349" ) == 0 )
-  {    
-		selectedText = file349Text;
-  }
-	else if ( mg_filesystem_data.file_exists(path) == true)
+  char* selectedText;
+
+	if ( mg_filesystem_data.file_exists(path) == true)
   {
      selectedText = mg_filesystem_data.read_file_content(path);
   }
 	else
   {
     printf("file does not exist ! ************************\n");
-		return -1;
+		return -ENOENT;
   }
 
 	memcpy( buffer, selectedText + offset, size );
@@ -109,17 +104,33 @@ struct hello_fuse_operations : fuse_operations
 {
     hello_fuse_operations ()
     {
-        getattr    = do_getattr;
-        readdir    = do_readdir;
-        read       = do_read;
-        write      = mg_write;
-        chmod      = mg_chmod;
-        chown      = mg_chown;
-        mkdir      = mg_mkdir;
-        rename     = mg_rename;
-        truncate   = mg_truncate;
-        unlink     = mg_unlink;
-        create     = mg_create;
+        getattr     = do_getattr;
+        readdir     = do_readdir;
+        read        = do_read;
+        write       = mg_write;
+        chmod       = mg_chmod;
+        chown       = mg_chown;
+        mkdir       = mg_mkdir;
+        rename      = mg_rename;
+        truncate    = mg_truncate;
+        unlink      = mg_unlink;
+        create      = mg_create;
+        mknod       = mg_mknod;
+        utimens     = mg_utimens;
+        readlink    = mg_readlink;
+        rmdir       = mg_rmdir;
+        symlink     = mg_symlink;
+        open        = mg_open;
+        flush       = mg_flush;
+        release     = mg_release;
+        fsync       = mg_fsync;
+        setxattr    = mg_setxattr;
+        getxattr    = mg_getxattr;
+        listxattr   = mg_listxattr;
+        removexattr = mg_removexattr;
+        opendir     = mg_opendir;
+        releasedir  = mg_releasedir;
+        fsyncdir    = mg_fsyncdir;
     }
 };
 
