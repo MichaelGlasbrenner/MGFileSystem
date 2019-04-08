@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-
+#include <map>
 #include <fuse.h>
 
 class filesystem_data
@@ -29,6 +29,9 @@ class filesystem_data
 
        std::vector<simple_directory> _the_directories;
 
+       std::map<std::string, size_t> _file_lookup;
+       std::map<std::string, size_t> _directory_lookup;
+
     public:
        filesystem_data();
 
@@ -48,6 +51,9 @@ class filesystem_data
 
     private:
        int get_index_for_filename(const char* path);
+       int get_index_for_dirname(const char* path);
+       std::string get_dir_from_path(const std::string& path);
+       std::string get_filename_from_path(const std::string& path);
 };
 
 

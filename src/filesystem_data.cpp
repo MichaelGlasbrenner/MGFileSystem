@@ -148,15 +148,21 @@ void filesystem_data::remove_file(const char* path)
 
 void filesystem_data::create_file(const char* path, mode_t new_mode)
 {
+   printf("create_file with path : %s \n", path);
    simple_file new_file;
 
-   new_file._path = std::string(path);
+   new_file._path = std::string(path).erase(0 , 1); // remove beginning "/";
    new_file._name = "new_file";
    new_file._mode = new_mode;
    new_file._content = "";
 
    _the_files.push_back(new_file);
 
+   
+   std::string the_dir_name = this->get_dir_from_path( std::string(path) );
+   simple_directory& the_dir = _the_directories[ this->get_index_for_dirname(the_dir_name.c_str()) ];
+
+   the_dir._contained_files.push_back( &(_the_files.back()) );
 }
 
 
@@ -174,6 +180,37 @@ int filesystem_data::get_index_for_filename(const char* path)
    }
 
    return -1; // FIXME : error handling
+}
+
+
+
+int filesystem_data::get_index_for_dirname(const char* path)
+{
+   for(int i=0; i < _the_directories.size(); ++i)
+   {
+       printf("comparing %s to %s \n", path, _the_directories[i]._directory_file._path.c_str() );
+       if(strcmp( path, _the_directories[i]._directory_file._path.c_str() ) == 0)
+       {
+           printf("the are equal !!!!\n");
+           return i;
+       }
+   }
+
+   return -1; // FIXME : error handling
+}
+
+
+std::string filesystem_data::get_dir_from_path(const std::string& path)
+{
+  std::size_t found = path.find_last_of("/");
+  return path.substr(0,found);
+}
+
+
+std::string filesystem_data::get_filename_from_path(const std::string& path)
+{
+  std::size_t found = path.find_last_of("/");
+  return path.substr(found+1);
 }
 
 
