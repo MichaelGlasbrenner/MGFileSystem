@@ -6,6 +6,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 filesystem_data mg_filesystem_data;
 
@@ -59,6 +60,8 @@ char* filesystem_data::read_file_content(const char *path)
 
    int index = this->get_index_for_filename(path);
 
+   assert(index >= 0);
+
    char* the_content = new char[_the_files[index]._content.length() + 1];
            
    strcpy(the_content, _the_files[index]._content.c_str());
@@ -70,6 +73,8 @@ char* filesystem_data::read_file_content(const char *path)
 void filesystem_data::get_attributes(const char* path, struct stat* st)
 {
    int index = this->get_index_for_filename(path);
+
+   assert(index >= 0);
 
    st->st_mode = _the_files[index]._mode;
 }
@@ -90,6 +95,8 @@ void filesystem_data::set_file_mode(const char* path, mode_t new_mode)
 {
    int index = this->get_index_for_filename(path);
 
+   assert(index >= 0);
+
    _the_files[index]._mode = new_mode;
 }
 
@@ -97,6 +104,8 @@ void filesystem_data::set_file_mode(const char* path, mode_t new_mode)
 void filesystem_data::write_file_content(const char* path, const char* new_data, size_t size, off_t offset)
 {
    int index = this->get_index_for_filename(path);
+
+   assert(index >= 0);
 
    std::string full_input = std::string(new_data);
    std::string string_for_writing = full_input.substr (0, size);
@@ -119,6 +128,8 @@ void filesystem_data::create_directory(const char* path, mode_t new_mode)
 void filesystem_data::rename_file(const char* path, const char* new_path)
 {
    int index = this->get_index_for_filename(path);
+
+   assert(index >= 0);
 
    _the_files[index]._path = std::string(new_path);
 
@@ -160,7 +171,12 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
 
    
    std::string the_dir_name = this->get_dir_from_path( std::string(path) );
-   simple_directory& the_dir = _the_directories[ this->get_index_for_dirname(the_dir_name.c_str()) ];
+
+   int dir_index = this->get_index_for_dirname(the_dir_name.c_str());
+   assert(dir_index >= 0);
+   assert(dir_index < _the_directories.size());
+
+   simple_directory& the_dir = _the_directories[ dir_index ];
 
    the_dir._contained_files.push_back( &(_the_files.back()) );
 }
@@ -169,6 +185,7 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
 
 int filesystem_data::get_index_for_filename(const char* path)
 {
+   printf("entering filesystem_data::get_index_for_filename with path = %s", path);
    for(int i=0; i < _the_files.size(); ++i)
    {
        printf("comparing %s to %s \n", path, _the_files[i]._path.c_str() );
@@ -186,6 +203,7 @@ int filesystem_data::get_index_for_filename(const char* path)
 
 int filesystem_data::get_index_for_dirname(const char* path)
 {
+   printf("entering filesystem_data::get_index_for_dirname with path = %s", path);
    for(int i=0; i < _the_directories.size(); ++i)
    {
        printf("comparing %s to %s \n", path, _the_directories[i]._directory_file._path.c_str() );

@@ -5,6 +5,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "filesystem_data.h"
 
