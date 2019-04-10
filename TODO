@@ -1,0 +1,3 @@
+mv to file that already exists duplicates the file !!
+
+opening / writing to file with VI does not work properly 
