@@ -162,8 +162,12 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
    printf("create_file with path : %s \n", path);
    simple_file new_file;
 
-   new_file._path = std::string(path).erase(0 , 1); // remove beginning "/";
-   new_file._name = "new_file";
+   new_file._path = std::string(path); 
+  
+   std::string path_string = std::string(path);
+   std::size_t found = path_string.find_last_of("/");
+
+   new_file._name = path_string.substr(found+1);
    new_file._mode = new_mode;
    new_file._content = "";
 
@@ -196,6 +200,7 @@ int filesystem_data::get_index_for_filename(const char* path)
        }
    }
 
+   printf("did not find file - returning -1");
    return -1; // FIXME : error handling
 }
 
@@ -203,7 +208,7 @@ int filesystem_data::get_index_for_filename(const char* path)
 
 int filesystem_data::get_index_for_dirname(const char* path)
 {
-   printf("entering filesystem_data::get_index_for_dirname with path = %s", path);
+   printf("entering filesystem_data::get_index_for_dirname with path = %s \n", path);
    for(int i=0; i < _the_directories.size(); ++i)
    {
        printf("comparing %s to %s \n", path, _the_directories[i]._directory_file._path.c_str() );
@@ -214,6 +219,7 @@ int filesystem_data::get_index_for_dirname(const char* path)
        }
    }
 
+   printf("did not find directory - returning -1");
    return -1; // FIXME : error handling
 }
 
@@ -221,7 +227,7 @@ int filesystem_data::get_index_for_dirname(const char* path)
 std::string filesystem_data::get_dir_from_path(const std::string& path)
 {
   std::size_t found = path.find_last_of("/");
-  return path.substr(0,found);
+  return path.substr(0,found+1);
 }
 
 
