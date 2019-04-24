@@ -13,6 +13,84 @@ extern filesystem_data mg_filesystem_data;
 
 int counter = 0;
 
+
+static int mg_getattr( const char *path, struct stat *st )
+{
+	printf( "[getattr] Called\n" );
+	printf( "\tAttributes of %s requested\n", path );
+	
+	// GNU's definitions of the attributes (http://www.gnu.org/software/libc/manual/html_node/Attribute-Meanings.html):
+	// 		st_uid: 	The user ID of the file’s owner.
+	//		st_gid: 	The group ID of the file.
+	//		st_atime: 	This is the last access time for the file.
+	//		st_mtime: 	This is the time of the last modification to the contents of the file.
+	//		st_mode: 	Specifies the mode of the file. This includes file type information (see Testing File Type) and the file permission bits (see Permission Bits).
+	//		st_nlink: 	The number of hard links to the file. This count keeps track of how many directories have entries for this file. If the count is ever decremented to zero, then the file itself is discarded as soon 
+	//						as no process still holds it open. Symbolic links are not counted in the total.
+	//		st_size:	This specifies the size of a regular file in bytes. For files that are really devices this field isn’t usually meaningful. For symbolic links this specifies the length of the file name the link refers to.
+	
+	st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+	st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+	st->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
+	st->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
+	
+	if ( strcmp( path, "/" ) == 0 )
+	{
+		st->st_mode = S_IFDIR | 0755;
+		st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+	
+    return 0;
+	}
+	else if ( mg_filesystem_data.file_exists(path) == true)
+	{
+    mg_filesystem_data.get_attributes(path, st);
+    
+    return 0; // file exists
+  }
+	else
+	{
+    return -ENOENT; // meaning "no such file or directory"
+	}
+	
+}
+
+static int mg_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi )
+{
+	printf( "--> Getting The List of Files of %s ***********\n", path );
+	
+	filler( buffer, ".", NULL, 0 ); // Current Directory
+	filler( buffer, "..", NULL, 0 ); // Parent Directory
+	
+	if ( strcmp( path, "/" ) == 0 ) // If the user is trying to show the files/directories of the root directory show the following
+	{
+    mg_filesystem_data.list_files_in_dir(path, buffer, filler);
+	}
+	
+	return 0;
+}
+
+static int mg_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
+{
+	printf( "--> Trying to read %s, %zu, %zu\n", path, offset, size );
+	
+  char* selectedText;
+
+	if ( mg_filesystem_data.file_exists(path) == true)
+  {
+     selectedText = mg_filesystem_data.read_file_content(path);
+  }
+	else
+  {
+    printf("file does not exist ! ************************\n");
+		return -ENOENT;
+  }
+
+	memcpy( buffer, selectedText + offset, size );
+		
+	return strlen( selectedText ) - offset;
+}
+
+
 static int mg_chmod(const char* path, mode_t new_mode)
 {
     printf("\n\ncalling mg_chmod ***********************************\n");
@@ -27,6 +105,8 @@ static int mg_chmod(const char* path, mode_t new_mode)
 static int mg_write( const char* path, const char* buffer, size_t size, off_t offset, struct fuse_file_info *fi )
 {
     printf( "\n\ncalling mg_write ********************************\n" );
+    printf("size, offset : %zu %zu \n", size, offset);
+    printf("the_buffer : %s \n", buffer);
 
     mg_filesystem_data.write_file_content(path, buffer, size, offset);
 

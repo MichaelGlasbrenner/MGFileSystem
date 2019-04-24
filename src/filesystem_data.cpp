@@ -62,7 +62,7 @@ char* filesystem_data::read_file_content(const char *path)
 
    assert(index >= 0);
 
-   char* the_content = new char[_the_files[index]._content.length() + 1];
+   char* the_content = new char[_the_files[index]._content.length()];
            
    strcpy(the_content, _the_files[index]._content.c_str());
 
@@ -77,6 +77,9 @@ void filesystem_data::get_attributes(const char* path, struct stat* st)
    assert(index >= 0);
 
    st->st_mode = _the_files[index]._mode;
+   st->st_nlink = 1; // FIXME
+   st->st_size = _the_files[index]._content.length();
+
 }
 
 
@@ -103,6 +106,8 @@ void filesystem_data::set_file_mode(const char* path, mode_t new_mode)
 
 void filesystem_data::write_file_content(const char* path, const char* new_data, size_t size, off_t offset)
 {
+   printf("calling filesystem_data::write_file_content with data: \n\n %s \n\n", new_data);
+   fflush(stdout);
    int index = this->get_index_for_filename(path);
 
    assert(index >= 0);
@@ -170,6 +175,7 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
    new_file._name = path_string.substr(found+1);
    new_file._mode = new_mode;
    new_file._content = "";
+   new_file._content.insert(0, 4*4096, ' ') ; // Linux/Vim expects minimal file size of 4096
 
    _the_files.push_back(new_file);
 
@@ -195,7 +201,7 @@ int filesystem_data::get_index_for_filename(const char* path)
        printf("comparing %s to %s \n", path, _the_files[i]._path.c_str() );
        if(strcmp( path, _the_files[i]._path.c_str() ) == 0)
        {
-           printf("the are equal !!!!\n");
+           printf("the are equal !!! -> result : %d \n", i);
            return i;
        }
    }
@@ -214,7 +220,7 @@ int filesystem_data::get_index_for_dirname(const char* path)
        printf("comparing %s to %s \n", path, _the_directories[i]._directory_file._path.c_str() );
        if(strcmp( path, _the_directories[i]._directory_file._path.c_str() ) == 0)
        {
-           printf("the are equal !!!!\n");
+           printf("the are equal !!! -> result : %d \n", i);
            return i;
        }
    }
@@ -226,14 +232,19 @@ int filesystem_data::get_index_for_dirname(const char* path)
 
 std::string filesystem_data::get_dir_from_path(const std::string& path)
 {
+  printf("calling filesystem_data::get_dir_from_path with path = %s \n", path.c_str());
   std::size_t found = path.find_last_of("/");
+  printf("result : %s \n", path.substr(0,found+1).c_str());
   return path.substr(0,found+1);
 }
 
 
 std::string filesystem_data::get_filename_from_path(const std::string& path)
 {
+  printf("calling filesystem_data::get_filename_from_path with path = %s \n", path.c_str());
   std::size_t found = path.find_last_of("/");
+
+  printf("result : %s \n", path.substr(found+1).c_str());
   return path.substr(found+1);
 }
 
