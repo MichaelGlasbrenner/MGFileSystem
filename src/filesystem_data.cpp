@@ -18,6 +18,8 @@ filesystem_data::filesystem_data()
    mg_file_1._name = "mg_file_1";
    mg_file_1._mode = S_IFREG | 0777;
    mg_file_1._content = "this is the content";
+   mg_file_1._last_access_time = time(NULL);
+   mg_file_1._last_modification_time = time(NULL);
 
    _the_files.push_back(mg_file_1);
 
@@ -27,6 +29,8 @@ filesystem_data::filesystem_data()
    root_dir._directory_file._name = "/";
    root_dir._directory_file._mode = S_IFDIR | 0777;
    root_dir._directory_file._content = "./\n..\nmg_file_1\n";
+   root_dir._directory_file._last_access_time = time(NULL);
+   root_dir._directory_file._last_modification_time = time(NULL);
 
    root_dir._contained_files.push_back( &_the_files[0] );
 
@@ -79,7 +83,22 @@ void filesystem_data::get_attributes(const char* path, struct stat* st)
    st->st_mode = _the_files[index]._mode;
    st->st_nlink = 1; // FIXME
    st->st_size = _the_files[index]._content.length();
+   
+   st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+   st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+   st->st_atime = _the_files[index]._last_access_time;
+   st->st_mtime = _the_files[index]._last_modification_time;
+}
 
+
+void filesystem_data::set_access_and_modification_times(const char* path, const struct timespec tv[2])
+{
+   int index = this->get_index_for_filename(path);
+
+   assert(index >= 0);
+
+   _the_files[index]._last_access_time = tv[0].tv_sec;
+   _the_files[index]._last_modification_time =  tv[1].tv_sec;
 }
 
 
@@ -115,7 +134,29 @@ void filesystem_data::write_file_content(const char* path, const char* new_data,
    std::string full_input = std::string(new_data);
    std::string string_for_writing = full_input.substr (0, size);
 
-   _the_files[index]._content.insert(offset, string_for_writing); // FIXME : is this insertion what is supposed to be done ?
+   if(offset > _the_files[index]._content.size())
+   {
+      printf("inserting content with resizing\n");
+      _the_files[index]._content.resize(offset);
+      _the_files[index]._content.insert(offset, string_for_writing); // FIXME : is this insertion what is supposed to be done ?
+
+   }
+   else
+   {
+      printf("inserting content without resizing\n");
+      _the_files[index]._content.insert(offset, string_for_writing); // FIXME : is this insertion what is supposed to be done ?
+   }
+}
+
+
+void filesystem_data::truncate_file(const char* path, off_t new_length)
+{
+   printf("calling filesystem_data::truncate_file with new_length: \n\n %d \n\n", (int)new_length);
+   int index = this->get_index_for_filename(path);
+
+   assert(index >= 0);
+
+   _the_files[index]._content = _the_files[index]._content.substr(0, new_length);
 }
 
 
@@ -175,7 +216,8 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
    new_file._name = path_string.substr(found+1);
    new_file._mode = new_mode;
    new_file._content = "";
-   new_file._content.insert(0, 4*4096, ' ') ; // Linux/Vim expects minimal file size of 4096
+   new_file._last_access_time = time(NULL);
+   new_file._last_modification_time = time(NULL);
 
    _the_files.push_back(new_file);
 

@@ -15,6 +15,8 @@ class filesystem_data
            std::string _name;
            mode_t      _mode;
            std::string _content;
+           time_t      _last_access_time;
+           time_t      _last_modification_time;
        };
 
        std::vector<simple_file> _the_files;
@@ -46,6 +48,8 @@ class filesystem_data
        void create_directory(const char* path, mode_t new_mode);
        void remove_file(const char* path);
        void create_file(const char* path, mode_t new_mode);
+       void set_access_and_modification_times(const char* path, const struct timespec tv[2]);
+       void truncate_file(const char* path, off_t new_length);
 
        void debug();
 
