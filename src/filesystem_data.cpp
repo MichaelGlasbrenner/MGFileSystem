@@ -20,6 +20,8 @@ filesystem_data::filesystem_data()
    mg_file_1._content = "this is the content";
    mg_file_1._last_access_time = time(NULL);
    mg_file_1._last_modification_time = time(NULL);
+   mg_file_1._user = getuid();
+   mg_file_1._group = getgid();
 
    _the_files.push_back(mg_file_1);
 
@@ -31,6 +33,8 @@ filesystem_data::filesystem_data()
    root_dir._directory_file._content = "./\n..\nmg_file_1\n";
    root_dir._directory_file._last_access_time = time(NULL);
    root_dir._directory_file._last_modification_time = time(NULL);
+   root_dir._directory_file._user = getuid();
+   root_dir._directory_file._group = getgid();
 
    root_dir._contained_files.push_back( &_the_files[0] );
 
@@ -84,8 +88,8 @@ void filesystem_data::get_attributes(const char* path, struct stat* st)
    st->st_nlink = 1; // FIXME
    st->st_size = _the_files[index]._content.length();
    
-   st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
-   st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+   st->st_uid = _the_files[index]._user; 
+   st->st_gid = _the_files[index]._group; 
    st->st_atime = _the_files[index]._last_access_time;
    st->st_mtime = _the_files[index]._last_modification_time;
 }
@@ -99,6 +103,17 @@ void filesystem_data::set_access_and_modification_times(const char* path, const 
 
    _the_files[index]._last_access_time = tv[0].tv_sec;
    _the_files[index]._last_modification_time =  tv[1].tv_sec;
+}
+
+
+void filesystem_data::change_ownership(const char* path, uid_t new_user, gid_t new_group)
+{
+   int index = this->get_index_for_filename(path);
+
+   assert(index >= 0);
+
+   _the_files[index]._user = new_user;
+   _the_files[index]._group = new_group;
 }
 
 
@@ -218,6 +233,8 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
    new_file._content = "";
    new_file._last_access_time = time(NULL);
    new_file._last_modification_time = time(NULL);
+   new_file._user = getuid();
+   new_file._group = getgid();
 
    _the_files.push_back(new_file);
 

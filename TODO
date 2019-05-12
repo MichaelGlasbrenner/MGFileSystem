@@ -1,3 +1,7 @@
 mv to file that already exists duplicates the file !!
 
+cp / mv does not update the timestamps !!
+
 after copy, the file permissions or not identical !!
+
+chown does not work !!

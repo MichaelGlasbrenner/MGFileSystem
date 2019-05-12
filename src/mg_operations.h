@@ -148,10 +148,12 @@ static int mg_rename(const char* path, const char* new_name)
 }
 
 
-static int mg_chown (const char* path, uid_t, gid_t)
+static int mg_chown (const char* path, uid_t new_user, gid_t new_group)
 {
     printf("\n\n");
     printf("\n\ncalling mg_chown *******************************\n");
+
+    mg_filesystem_data.change_ownership(path, new_user, new_group);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
