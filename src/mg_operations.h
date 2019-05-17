@@ -72,6 +72,7 @@ static int mg_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, o
     return 0;
 }
 
+
 static int mg_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
 {
     printf("\n\n");
