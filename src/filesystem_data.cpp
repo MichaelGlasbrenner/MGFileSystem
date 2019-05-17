@@ -188,6 +188,13 @@ void filesystem_data::create_directory(const char* path, mode_t new_mode)
 
 void filesystem_data::rename_file(const char* path, const char* new_path)
 {
+   int index_new_path = this->get_index_for_filename(new_path);
+
+   if(index_new_path >= 0) // mv destination already exists -> delete this file
+   {
+      this->remove_file(new_path);
+   }
+   
    int index = this->get_index_for_filename(path);
 
    assert(index >= 0);
@@ -233,8 +240,11 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
    new_file._content = "";
    new_file._last_access_time = time(NULL);
    new_file._last_modification_time = time(NULL);
-   new_file._user = getuid();
-   new_file._group = getgid();
+   
+   new_file._user = fuse_get_context()->uid;
+   new_file._group = fuse_get_context()->gid;
+   //new_file._user = getuid(); // user-id of user who mounted the filesystem
+   //new_file._group = getgid(); // group-id of user who mounted the filesystem
 
    _the_files.push_back(new_file);
 

@@ -1,7 +1,7 @@
-mv to file that already exists duplicates the file !!
-
 cp / mv does not update the timestamps !!
 
-after copy, the file permissions or not identical !!
+after copy, the file permissions and ownerships or not identical !!
 
-chown does not work !!
+one should not be able to copy file of a different user such as root
+
+
