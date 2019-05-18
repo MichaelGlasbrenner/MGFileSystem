@@ -1,5 +1,5 @@
 COMPILER = g++
-FILESYSTEM_FILES = src/main.cpp src/filesystem_data.cpp
+FILESYSTEM_FILES = src/main.cpp src/filesystem_data.cpp 
 
 build: $(FILESYSTEM_FILES)
 	@echo "\n"
