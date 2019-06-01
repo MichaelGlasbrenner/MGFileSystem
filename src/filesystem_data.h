@@ -29,6 +29,7 @@ class filesystem_data
 
            std::vector<simple_file*> _contained_files;
            std::vector<simple_directory*> _contained_directories;
+           simple_directory* _root_directory;
        };
 
        std::vector<simple_directory> _the_directories;
@@ -61,6 +62,7 @@ class filesystem_data
        int get_index_for_dirname(const char* path);
        std::string get_dir_from_path(const std::string& path);
        std::string get_filename_from_path(const std::string& path);
+       simple_file* get_fileptr_for_filename(const std::string& path);
 };
 
 

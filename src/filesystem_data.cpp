@@ -38,23 +38,33 @@ filesystem_data::filesystem_data()
 
    root_dir._contained_files.push_back( &_the_files[0] );
 
+   simple_directory* mg_dir_1 = new simple_directory;
+
+   mg_dir_1->_directory_file._path = "/mg_dir_1";
+   mg_dir_1->_directory_file._name = "mg_dir_1";
+   mg_dir_1->_directory_file._mode = S_IFDIR | 0777;
+   mg_dir_1->_directory_file._content = "./\n..\nmg_file_1\n";
+
+   _the_directories.push_back( *mg_dir_1 );
+
+   root_dir._contained_directories.push_back( mg_dir_1 );
+
    _the_directories.push_back(root_dir);
-
-   simple_directory mg_dir_1;
-
-   mg_dir_1._directory_file._path = "/mg_dir_1";
-   mg_dir_1._directory_file._name = "mg_dir_1";
-   mg_dir_1._directory_file._mode = S_IFDIR | 0777;
-   mg_dir_1._directory_file._content = "./\n..\nmg_file_1\n";
-
-   _the_directories.push_back(mg_dir_1);
-
-   root_dir._contained_directories.push_back( &mg_dir_1);
 }
 
 
 void filesystem_data::list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler)
 {
+   int directory_index = this->get_index_for_dirname(path);
+
+   this->debug();
+
+   for(int i=0; i < _the_directories.at(directory_index)._contained_directories.size(); ++i)
+   {
+      printf("listing contained directory : %s \n", _the_directories.at(directory_index)._contained_directories.at(i)->_directory_file._name.c_str());
+      filler(buffer, _the_directories.at(directory_index)._contained_directories.at(i)->_directory_file._name.c_str(), NULL, 0 );
+   }
+   
    for(int i=0; i < _the_files.size(); ++i)
    {
       filler(buffer, _the_files[i]._name.c_str(), NULL, 0 );
@@ -80,18 +90,18 @@ char* filesystem_data::read_file_content(const char *path)
 
 void filesystem_data::get_attributes(const char* path, struct stat* st)
 {
-   int index = this->get_index_for_filename(path);
+   simple_file* fileptr = this->get_fileptr_for_filename(path);
 
-   assert(index >= 0);
+   if(fileptr == NULL) return;
 
-   st->st_mode = _the_files[index]._mode;
+   st->st_mode = fileptr->_mode;
    st->st_nlink = 1; // FIXME
-   st->st_size = _the_files[index]._content.length();
+   st->st_size = fileptr->_content.length();
    
-   st->st_uid = _the_files[index]._user; 
-   st->st_gid = _the_files[index]._group; 
-   st->st_atime = _the_files[index]._last_access_time;
-   st->st_mtime = _the_files[index]._last_modification_time;
+   st->st_uid = fileptr->_user; 
+   st->st_gid = fileptr->_group; 
+   st->st_atime = fileptr->_last_access_time;
+   st->st_mtime = fileptr->_last_modification_time;
 }
 
 
@@ -177,7 +187,6 @@ void filesystem_data::truncate_file(const char* path, off_t new_length)
 
 void filesystem_data::create_directory(const char* path, mode_t new_mode)
 {
-
     simple_directory new_dir;
 
     new_dir._directory_file._path = std::string(path);
@@ -261,6 +270,31 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
 }
 
 
+/*int filesystem_data::get_directory_index_from_path(const char* path)
+{
+   printf("entering filesystem_data::get_directory_index_from_path with path = %s", path);
+   
+   std::string path_string = std::string(path);
+   std::size_t position_of_last_slash = path_string.find_last_of("/");
+   std::string dir_path = path_string.substr(0, position_of_last_path);
+   
+   printf("dir_path = %s", dir_path.c_str());
+   
+   for(int i=0; i < _the_directories.size(); ++i)
+   {
+       printf("comparing %s to %s \n", dir_path.c_str(), _the_directories[i]._directory_file._path.c_str() );
+       if(strcmp( dir_path.c_str() == _the_directories[i]._directory_file._path.c_str() ) == 0)
+       {
+           printf("the are equal !!! -> result : %d \n", i);
+           return i;
+       }
+   }
+
+   printf("did not find directory - returning -1");
+   return -1; // FIXME : error handling
+   
+}*/
+
 
 int filesystem_data::get_index_for_filename(const char* path)
 {
@@ -316,6 +350,29 @@ std::string filesystem_data::get_filename_from_path(const std::string& path)
   printf("result : %s \n", path.substr(found+1).c_str());
   return path.substr(found+1);
 }
+ 
+
+filesystem_data::simple_file* filesystem_data::get_fileptr_for_filename(const std::string& path)
+{
+    int file_index = this->get_index_for_filename(path.c_str());
+
+    if(file_index >= 0)
+    {
+       return &(_the_files.at(file_index)); 
+    }
+
+    int dir_index = this->get_index_for_dirname(path.c_str());
+
+    if(dir_index >= 0)
+    {
+       return &(_the_directories.at(dir_index)._directory_file); 
+
+    }
+    else
+    {
+       return NULL;
+    }
+}
 
 
 void filesystem_data::debug()
@@ -329,6 +386,13 @@ void filesystem_data::debug()
                                                          _the_files[i]._content.c_str());
    }
 
+   printf("directories : \n\n");
+   for(int i=0; i < _the_directories.size(); ++i)
+   {
+       simple_file& dirfile = _the_directories.at(i)._directory_file;
+
+       printf("path : %s, name: %s ; content : %s \n", dirfile._path.c_str(), dirfile._name.c_str(), dirfile._content.c_str());
+   }
 
    printf("\n\n===============  MG_FILESYSTEM DEBUG END   =================================\n\n");
 }
