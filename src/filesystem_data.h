@@ -44,6 +44,7 @@ class filesystem_data
        char* read_file_content(const char *path);
        void get_attributes(const char* path, struct stat* st);
        bool file_exists(const char* path);
+       bool directory_exists(const char* path);
 
        void set_file_mode(const char* path, mode_t new_mode);
        void write_file_content(const char* path, const char* data, size_t size, off_t offset);

@@ -1,9 +1,9 @@
 # SCRIPT FOR CARRYING OUT A "GIT COMMIT"
 
 git add src/*.cpp
-git add src/*.h
+git add *.h
 git add *.sh
-git add README
+git add README.md
 git add CMakeLists.txt
 git add Makefile
 git add TODO

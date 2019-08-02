@@ -42,8 +42,12 @@ filesystem_data::filesystem_data()
 
    mg_dir_1->_directory_file._path = "/mg_dir_1";
    mg_dir_1->_directory_file._name = "mg_dir_1";
-   mg_dir_1->_directory_file._mode = S_IFDIR | 0777;
+   mg_dir_1->_directory_file._mode = S_IFDIR | 0775;
    mg_dir_1->_directory_file._content = "./\n..\nmg_file_1\n";
+   mg_dir_1->_directory_file._last_access_time = time(NULL);
+   mg_dir_1->_directory_file._last_modification_time = time(NULL);
+   mg_dir_1->_directory_file._user = getuid();
+   mg_dir_1->_directory_file._group = getgid();
 
    _the_directories.push_back( *mg_dir_1 );
 
@@ -135,6 +139,17 @@ bool filesystem_data::file_exists(const char* path)
    printf("answer : %s ************************\n", index > 0 ? "true" : "false" );
 
    return (index >= 0 ? true : false);
+}
+
+
+bool filesystem_data::directory_exists(const char* path)
+{
+   int dir_index = this->get_index_for_dirname(path);
+   
+   printf("determining if directory with path %s exists **************************\n", path);
+   printf("answer : %s ************************\n", dir_index > 0 ? "true" : "false" );
+
+   return (dir_index >= 0 ? true : false);
 }
 
 

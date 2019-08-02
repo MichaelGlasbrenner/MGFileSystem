@@ -48,6 +48,12 @@ static int mg_getattr( const char *path, struct stat *st )
 
         return 0; // file exists
     }
+    else if ( mg_filesystem_data.directory_exists(path) == true)
+    {
+        mg_filesystem_data.get_attributes(path, st);
+
+        return 0; // file exists
+    }
     else
     {
         printf("returning -ENOENT \n");
