@@ -62,6 +62,7 @@ class filesystem_data
        int get_index_for_filename(const char* path);
        int get_index_for_dirname(const char* path);
        std::string get_dir_from_path(const std::string& path);
+       simple_directory* get_parent_directory_from_path(const std::string& path);
        std::string get_filename_from_path(const std::string& path);
        simple_file* get_fileptr_for_filename(const std::string& path);
 };

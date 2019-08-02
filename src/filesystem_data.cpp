@@ -202,11 +202,25 @@ void filesystem_data::truncate_file(const char* path, off_t new_length)
 
 void filesystem_data::create_directory(const char* path, mode_t new_mode)
 {
-    simple_directory new_dir;
+    simple_directory* new_dir = new simple_directory;
 
-    new_dir._directory_file._path = std::string(path);
+    new_dir->_directory_file._path = std::string(path);
+    new_dir->_directory_file._name = this->get_filename_from_path(std::string(path));
+    new_dir->_directory_file._mode = S_IFDIR | 0775;
+    new_dir->_directory_file._content = "";
+    new_dir->_directory_file._last_access_time = time(NULL);
+    new_dir->_directory_file._last_modification_time = time(NULL);
+    new_dir->_directory_file._user = getuid();
+    new_dir->_directory_file._group = getgid();
+    
+    simple_directory* parent_of_new_dir = this->get_parent_directory_from_path( path );
 
-    _the_directories.push_back(new_dir);
+    new_dir->_root_directory = parent_of_new_dir; 
+
+
+    _the_directories.push_back( *new_dir );
+
+    parent_of_new_dir->_contained_directories.push_back( new_dir );
 }
 
 
@@ -333,10 +347,19 @@ int filesystem_data::get_index_for_filename(const char* path)
 int filesystem_data::get_index_for_dirname(const char* path)
 {
    printf("entering filesystem_data::get_index_for_dirname with path = %s \n", path);
+ 
+   std::string dir_path(path);
+
+   // remove terminal / if present (and if the directory is not the root directory)
+   if( dir_path.back() == '/' && (dir_path.length() > 1))
+   {
+       dir_path = dir_path.substr(0, dir_path.length() - 1);
+   }
+   
    for(int i=0; i < _the_directories.size(); ++i)
    {
-       printf("comparing %s to %s \n", path, _the_directories[i]._directory_file._path.c_str() );
-       if(strcmp( path, _the_directories[i]._directory_file._path.c_str() ) == 0)
+       printf("comparing %s to %s \n", dir_path.c_str(), _the_directories[i]._directory_file._path.c_str() );
+       if(strcmp( dir_path.c_str(), _the_directories[i]._directory_file._path.c_str() ) == 0)
        {
            printf("the are equal !!! -> result : %d \n", i);
            return i;
@@ -354,6 +377,41 @@ std::string filesystem_data::get_dir_from_path(const std::string& path)
   std::size_t found = path.find_last_of("/");
   printf("result : %s \n", path.substr(0,found+1).c_str());
   return path.substr(0,found+1);
+}
+
+
+filesystem_data::simple_directory* filesystem_data::get_parent_directory_from_path(const std::string& path)
+{
+  printf("calling filesystem_data::get_parent_directory_from_path with path = %s \n", path.c_str());
+  
+  std::string parent_path;
+
+  if( path.back() == '/' )
+  {
+      // find previous slash
+      std::size_t second_last_slash_pos = path.substr(0,path.length()-1).find_last_of("/");
+      printf("result : %s \n", path.substr(0,second_last_slash_pos+1).c_str());
+      parent_path =  path.substr(0,second_last_slash_pos+1);
+  }
+  else
+  {
+      std::size_t last_slash_pos = path.find_last_of("/");
+      printf("result : %s \n", path.substr(0,last_slash_pos+1).c_str());
+      parent_path = path.substr(0,last_slash_pos+1);
+  }
+
+  int dir_index = this->get_index_for_dirname(parent_path.c_str());
+
+  if(dir_index >= 0)
+  {
+      return &(_the_directories.at(dir_index)); 
+
+  }
+  else
+  {
+      return NULL;
+  }
+
 }
 
 

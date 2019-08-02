@@ -52,7 +52,7 @@ static int mg_getattr( const char *path, struct stat *st )
     {
         mg_filesystem_data.get_attributes(path, st);
 
-        return 0; // file exists
+        return 0; // directory exists
     }
     else
     {
