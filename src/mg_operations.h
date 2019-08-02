@@ -32,13 +32,13 @@ static int mg_getattr( const char *path, struct stat *st )
 
     st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
     st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
-    st->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
-    st->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
+    st->st_atime = time( NULL ); // The last access of the file/directory is right now
+    st->st_mtime = time( NULL ); // The last modification of the file/directory is right now
 
     if ( strcmp( path, "/" ) == 0 )
     {
         st->st_mode = S_IFDIR | 0755;
-        st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+        st->st_nlink = 2; // Why two hardlinks instead of one ? The answer is here: http://unix.stackexchange.com/a/101536
 
         return 0;
     }
