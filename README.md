@@ -1,3 +1,18 @@
+*** Installation (tested on Ubuntu 18.04.3 LTS): ***
+
+sudo apt-get install fuse libfuse-dev
+cmake .
+make
+
+****************************************************
+
+*** Running the program ***
+
+
+
+
+
+****************************************************
 
 
 Supported Filesystem Operations:
