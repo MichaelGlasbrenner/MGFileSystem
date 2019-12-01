@@ -3,6 +3,7 @@
 git add src/*.cpp
 git add *.h
 git add *.sh
+git add tests/*.py
 git add README.md
 git add CMakeLists.txt
 git add TODO
