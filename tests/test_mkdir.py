@@ -2,14 +2,14 @@ import test_tools
 import subprocess
 
 
-def test_touch_new_file():
+def test_mkdir_new_dir():
 
-    print("running test_touch");
+    print("running test_mkdir");
     success = False;
     error_message = "";
     ls_output = test_tools.ls_output("testdir");
 	
-    if test_tools.file_exists( "new_file", ls_output ):
+    if not test_tools.file_exists( "new_file", ls_output ):
        success = False;
        error_message = "file already existed";
        with open('temp_output', "w") as outfile:

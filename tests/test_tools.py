@@ -2,6 +2,7 @@
 
 import sys
 import subprocess
+import datetime
 
 def ls_output(directory):
    temp_file = open('temp_ls_output', "w")
@@ -24,6 +25,36 @@ def file_exists( file_name, output_of_ls ):
    return False; 
 
 
+def get_list_of_files(path):
+   temp_file = open('temp_ls_output', "w")
+   with temp_file as outfile:
+      subprocess.call(["find", ".", "-type", "f"], stdout=outfile)
+   temp_file.close();
+   
+   read_file = open("temp_ls_output", "r");
+   the_list = [];
+   for line in read_file:
+       the_list.append( line );
+   read_file.close();
+    
+   return the_list;
+
+
+def get_list_of_directories(path):
+   temp_file = open('temp_ls_output', "w")
+   with temp_file as outfile:
+      subprocess.call(["find", ".", "-type", "d"], stdout=outfile)
+   temp_file.close();
+   
+   read_file = open("temp_ls_output", "r");
+   the_list = [];
+   for line in read_file:
+       the_list.append( line );
+   read_file.close();
+    
+   return the_list;
+
+
 def get_file_property( which_property, file_name, output_of_ls ):
    for line in output_of_ls:
        if (line.split()[-1].strip() == file_name): # strip() removes the "\n"
@@ -39,4 +70,37 @@ def get_file_property( which_property, file_name, output_of_ls ):
             return line.split()[4];
           elif(which_property == "timestamp"):
             return (line.split()[5] + " " + line.split()[6] + " " + line.split()[7]);
+
+
+def check_creation_time(file_name, output_of_ls):
+    time_stamp = get_file_property( "timestamp", file_name, output_of_ls);
+    print(datetime.datetime.now());
+
+
+def get_file_content( file_name ):
+
+    the_content = [];
+    the_file = open( file_name, "r");
+    for line in the_file:
+        the_content.append(the_line);
+
+    return the_content;
+
+
+def files_have_same_content( file1, file2 ):
+
+    content1 = get_file_content(file1);
+    content2 = get_file_content(file2);
+
+    if not (len(content1)==len(content2)):
+       return False;    
+
+    content_is_identical = True;
+
+    for i, line in enumerate(file1):
+        if not (line == content2[i]):
+           content_is_identical = False;
+
+    return content_is_identical;
+
 
