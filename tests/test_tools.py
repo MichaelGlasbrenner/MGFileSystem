@@ -24,3 +24,19 @@ def file_exists( file_name, output_of_ls ):
    return False; 
 
 
+def get_file_property( which_property, file_name, output_of_ls ):
+   for line in output_of_ls:
+       if (line.split()[-1].strip() == file_name): # strip() removes the "\n"
+          if(which_property == "permissions"):
+            return line.split()[0];
+          elif(which_property == "hard_link_number"):
+            return line.split()[1];
+          elif(which_property == "owner"):
+            return line.split()[2];
+          elif(which_property == "group"):
+            return line.split()[3];
+          elif(which_property == "size"):
+            return line.split()[4];
+          elif(which_property == "timestamp"):
+            return (line.split()[5] + " " + line.split()[6] + " " + line.split()[7]);
+

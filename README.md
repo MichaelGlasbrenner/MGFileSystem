@@ -8,6 +8,7 @@ make
 
 *** Running the program ***
 
+./bin/MGfilesystem -d mountpoint
 
 
 

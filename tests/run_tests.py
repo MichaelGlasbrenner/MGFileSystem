@@ -6,20 +6,26 @@ import subprocess
 import test_touch
 import test_rm
 
-print("running tests");
+print("running tests\n");
 test_cases = [];
 test_cases.append( test_touch.test_touch );
 test_cases.append( test_rm.test_rm );
 
 failed_test_cases = [];
+error_messages = [];
 
 for test_case in test_cases:
-    successful = test_case();
+    successful, error_message = test_case();
     if(successful == False):
+       print("FAILED\n");
        failed_test_cases.append(test_case);
+       error_messages.append(error_message);
+    else:
+       print("PASSED\n");
 
-print(str(len(failed_test_cases)) + " out of " + str(len(test_cases)) + "failed");
-#for failed_test
+print(str(len(failed_test_cases)) + " out of " + str(len(test_cases)) + " tests failed");
+for index, failed_test in enumerate(failed_test_cases):
+    print("test " + str(failed_test) + " failed with error : " + str(error_messages[index]));
 
 #with open('temp_output', "w") as outfile:
    #subprocess.call(["ls"], stdout=outfile)
