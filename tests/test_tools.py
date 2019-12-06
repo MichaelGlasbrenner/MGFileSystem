@@ -23,18 +23,31 @@ def file_exists( file_name, output_of_ls ):
        if (line.split()[-1].strip() == file_name): # strip() removes the "\n"
           return True;
    return False; 
+   
+
+def directory_exists( file_name, dir_list ):
+   for line in dir_list:
+       if (line.split()[-1].strip() == file_name): # strip() removes the "\n"
+          return True;
+   return False; 
+
+
+def remove_prefix(text, prefix):
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text;
 
 
 def get_list_of_files(path):
    temp_file = open('temp_ls_output', "w")
    with temp_file as outfile:
-      subprocess.call(["find", ".", "-type", "f"], stdout=outfile)
+      subprocess.call(["find", path, "-type", "f"], stdout=outfile)
    temp_file.close();
    
    read_file = open("temp_ls_output", "r");
    the_list = [];
    for line in read_file:
-       the_list.append( line );
+       the_list.append( remove_prefix(line.rstrip(), path + "/") );
    read_file.close();
     
    return the_list;
@@ -43,13 +56,14 @@ def get_list_of_files(path):
 def get_list_of_directories(path):
    temp_file = open('temp_ls_output', "w")
    with temp_file as outfile:
-      subprocess.call(["find", ".", "-type", "d"], stdout=outfile)
+      subprocess.call(["find", path, "-type", "d"], stdout=outfile)
    temp_file.close();
    
    read_file = open("temp_ls_output", "r");
    the_list = [];
    for line in read_file:
-       the_list.append( line );
+       if not (line.rstrip() == path or line.rstrip() == (path + "/")):
+          the_list.append( remove_prefix(line.rstrip(), path + "/") );
    read_file.close();
     
    return the_list;
