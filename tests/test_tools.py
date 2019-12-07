@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import os
 import subprocess
 import datetime
 
@@ -96,7 +97,7 @@ def get_file_content( file_name ):
     the_content = [];
     the_file = open( file_name, "r");
     for line in the_file:
-        the_content.append(the_line);
+        the_content.append(line);
 
     return the_content;
 
@@ -118,3 +119,6 @@ def files_have_same_content( file1, file2 ):
     return content_is_identical;
 
 
+def run_bash_commands(list_of_commands):
+    for command in list_of_commands:
+        os.system( command );
