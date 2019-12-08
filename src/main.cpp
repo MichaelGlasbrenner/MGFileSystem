@@ -11,9 +11,12 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <libssh/libssh.h> // FIXME delete
+
 #include "mg_operations.h"
 
-extern filesystem_data mg_filesystem_data;
+//extern filesystem_data mg_filesystem_data;
+extern ssh_backend mg_filesystem_data;
 
 
 struct mg_fuse_operations : fuse_operations
@@ -55,6 +58,18 @@ static struct mg_fuse_operations mg_oper;
 
 int main( int argc, char *argv[] )
 {
-	return fuse_main( argc, argv, &mg_oper, NULL );
+    /*ssh_session my_ssh_session = ssh_new();
+
+    if(my_ssh_session == NULL)
+    { 
+       exit(-1);
+    }
+    else
+    {
+       printf("my_ssh_session != nullptr !!!");
+    }
+    ssh_free(my_ssh_session);*/
+
+    return fuse_main( argc, argv, &mg_oper, NULL );
 }
 

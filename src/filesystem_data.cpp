@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-filesystem_data mg_filesystem_data;
+//filesystem_data mg_filesystem_data;
 
 filesystem_data::filesystem_data()
 {

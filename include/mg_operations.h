@@ -8,8 +8,10 @@
 #include <assert.h>
 
 #include "filesystem_data.h"
+#include "ssh_backend.h"
 
-extern filesystem_data mg_filesystem_data;
+// FIXME extern filesystem_data mg_filesystem_data;
+extern ssh_backend mg_filesystem_data;
 
 int counter = 0;
 

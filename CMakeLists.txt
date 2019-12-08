@@ -7,6 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # add the headers in ./include to the project
 include_directories(${FUSE_INCLUDE_DIR})
 include_directories(include)
+include_directories(/usr/include/libssh/)
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON) 
@@ -25,4 +26,5 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall --pedantic -g")
 target_link_libraries(MGfilesystem ${FUSE_LIBRARIES})
+target_link_libraries(MGfilesystem libssh.so)
 
