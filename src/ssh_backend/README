@@ -1,0 +1,10 @@
+libssh install instructions (for Ubuntu 18.04):
+
+Download and extract libssh
+mkdir build
+cd build/
+sudo apt-get install libssl-dev
+sudo apt-get install libcmocka-dev
+cmake -DUNIT_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..
+make
+

@@ -7,5 +7,6 @@ git add tests/*.py
 git add README.md
 git add CMakeLists.txt
 git add TODO
+git add src/ssh_backend/README
 
 git commit
