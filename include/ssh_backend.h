@@ -4,6 +4,7 @@
 #include <fuse.h>
 #include "storage_backend.h"
 #include <libssh/libssh.h>
+#include <libssh/sftp.h>
 
 /*
  *  ssh-based remote file-system
@@ -36,11 +37,16 @@ class ssh_backend : public storage_backend
 
     private:
        ssh_session _session;
+       sftp_session _sftp_session;
        
     private:
        void establish_ssh_connection();
        int password_authentication(ssh_session session);
-       int show_remote_processes(ssh_session session);
+       int public_key_authentication(ssh_session session);
+       void remote_command(ssh_session session, const char* command);
+       int send_remote_command(ssh_session session, const char* command);
+       int init_sftp_session();
+       void close_sftp_session();
 };
 
 

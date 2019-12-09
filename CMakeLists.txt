@@ -22,6 +22,7 @@ find_package(FUSE REQUIRED)
 
 add_executable(MGfilesystem ${SOURCES} ${HEADERS}) 
 
+SET(CMAKE_BUILD_TYPE "DEBUG")
 SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall --pedantic -g")

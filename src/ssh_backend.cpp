@@ -9,6 +9,7 @@
 #include <assert.h>
 
 
+
 ssh_backend mg_filesystem_data;
 
 ssh_backend::ssh_backend()
@@ -20,8 +21,11 @@ ssh_backend::ssh_backend()
 
 ssh_backend::~ssh_backend()
 {
+    this->close_sftp_session();
+
     ssh_disconnect( _session );
     ssh_free(_session);
+
 }
 
 
@@ -34,8 +38,12 @@ void ssh_backend::establish_ssh_connection()
        exit(-1);
    }
 
-   ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.112");
+   //ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.112");
+   //ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
+   ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.100");
    ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
+   //ssh_options_set( _session, SSH_OPTIONS_HOST, "10.0.101.1");
+   //ssh_options_set( _session, SSH_OPTIONS_USER, "mglasbre");
 
    int rc = ssh_connect( _session );
    if(rc != SSH_OK)
@@ -45,16 +53,36 @@ void ssh_backend::establish_ssh_connection()
    }
 
    this->password_authentication(_session);
+   //this->public_key_authentication(_session);
 
-   int remote_success = this->show_remote_processes(_session);
-   if(remote_success != SSH_OK)
+   rc = this->init_sftp_session();
+   if(rc != SSH_OK)
    {
-      fprintf(stderr, "Error in establishing show_remote_processes : %s \n", ssh_get_error( _session ));
-      exit(-1);
-   }
+       fprintf(stderr, "SFTP error: %s \n", sftp_get_error(_sftp_session));
+   } 
+    
+   rc = sftp_mkdir( _sftp_session, "new_dir2", S_IRWXU );
+   //rc = sftp_mkdir( _sftp_session, "/home/michael/Programmierung/C++/MyFileSystem/tests/testdir/new_dir2", S_IRWXU );
+   if(rc != SSH_OK)
+   {
+       if(sftp_get_error(_sftp_session) != SSH_FX_FILE_ALREADY_EXISTS)
+       {
+	   fprintf(stderr, "Can't create directory: %s \n", ssh_get_error(_session));
+       }
+   } 
 
-   fflush(stdout);
-   exit(-2);
+   //this->create_directory();
+
+   //this->remote_command(_session, "ls -ltr");
+   //this->remote_command(_session, "cd Programmierung/C++");
+   //this->remote_command(_session, "mkdir SOME_FOLDER");
+   //this->remote_command(_session, "pwd");
+   //this->remote_command(_session, "pwd");
+   //this->remote_command(_session, "pwd");
+
+
+   //fflush(stdout);
+   //exit(-2);
 }
 
 
@@ -75,7 +103,33 @@ int ssh_backend::password_authentication(ssh_session session)
 }
 
 
-int ssh_backend::show_remote_processes(ssh_session session)
+int ssh_backend::public_key_authentication(ssh_session session)
+{
+    int rc;
+
+    rc = ssh_userauth_publickey_auto( session, NULL, NULL);
+    if(rc == SSH_AUTH_ERROR)
+    {
+       fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
+       return SSH_AUTH_ERROR;
+    }
+
+    return rc;
+}
+
+
+void ssh_backend::remote_command(ssh_session session, const char* command)
+{
+   int remote_success = this->send_remote_command(_session, command);
+   if(remote_success != SSH_OK)
+   {
+      fprintf(stderr, "Error in establishing send_remote_command : %s \n", ssh_get_error( _session ));
+      exit(-1);
+   }
+}
+
+
+int ssh_backend::send_remote_command(ssh_session session, const char* command)
 {
     ssh_channel channel;
     int rc;
@@ -90,7 +144,7 @@ int ssh_backend::show_remote_processes(ssh_session session)
 	ssh_channel_free(channel);
 	return rc;
     }
-    rc = ssh_channel_request_exec(channel, "ls -ltr");
+    rc = ssh_channel_request_exec(channel, command);
     if (rc != SSH_OK)
     {
 	ssh_channel_close(channel);
@@ -121,6 +175,36 @@ int ssh_backend::show_remote_processes(ssh_session session)
 }
 
 
+int ssh_backend::init_sftp_session()
+{
+  int rc;
+  _sftp_session = sftp_new(_session);
+  if (_sftp_session == NULL)
+  {
+    fprintf(stderr, "Error allocating SFTP session: %s\n",
+            ssh_get_error(_session));
+    return SSH_ERROR;
+  }
+
+  rc = sftp_init(_sftp_session);
+  if (rc != SSH_OK)
+  {
+    fprintf(stderr, "Error initializing SFTP session: code %d.\n",
+            sftp_get_error(_sftp_session));
+    sftp_free(_sftp_session);
+    return rc;
+  }
+  
+  return SSH_OK;
+}
+
+
+void ssh_backend::close_sftp_session()
+{
+  sftp_free(_sftp_session);
+}
+
+
 void ssh_backend::list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler)
 {
 
@@ -135,7 +219,25 @@ char* ssh_backend::read_file_content(const char *path)
 
 void ssh_backend::get_attributes(const char* path, struct stat* st)
 {
+   //sftp_attributes attributes_of_file = sftp_stat(_sftp_session, path);
+   sftp_attributes attributes_of_file = sftp_stat(_sftp_session, "new_dir");
 
+   if(attributes_of_file == NULL)
+   {
+    fprintf(stderr, "SSH error: code %s.\n", ssh_get_error(_session));
+    fprintf(stderr, "SFTP error: code %d.\n", sftp_get_error(_sftp_session));
+    return;
+   }
+
+
+   st->st_mode = attributes_of_file->permissions;
+   st->st_nlink = 1; // FIXME
+   st->st_size = attributes_of_file->size;
+   
+   st->st_uid = attributes_of_file->uid; 
+   st->st_gid = attributes_of_file->gid; 
+   st->st_atime = attributes_of_file->atime;
+   st->st_mtime = attributes_of_file->mtime;
 }
 
 
@@ -172,7 +274,15 @@ void ssh_backend::rename_file(const char* path, const char* new_path)
 
 void ssh_backend::create_directory(const char* path, mode_t new_mode)
 {
-
+    printf("calling ssh_backend::create_directory \n");
+    int rc = sftp_mkdir( _sftp_session, "new_dir", S_IRWXU );
+    if(rc != SSH_OK)
+    {
+       if(sftp_get_error(_sftp_session) != SSH_FX_FILE_ALREADY_EXISTS)
+       {
+          fprintf(stderr, "Can't create directory: %s \n", ssh_get_error(_session));
+       }
+    } 
 }
 
 
