@@ -61,7 +61,7 @@ void ssh_backend::establish_ssh_connection()
        fprintf(stderr, "SFTP error: %s \n", sftp_get_error(_sftp_session));
    } 
     
-   rc = sftp_mkdir( _sftp_session, "new_dir2", S_IRWXU );
+   //rc = sftp_mkdir( _sftp_session, "new_dir2", S_IRWXU );
    //rc = sftp_mkdir( _sftp_session, "/home/michael/Programmierung/C++/MyFileSystem/tests/testdir/new_dir2", S_IRWXU );
    if(rc != SSH_OK)
    {
@@ -229,7 +229,6 @@ void ssh_backend::get_attributes(const char* path, struct stat* st)
     return;
    }
 
-
    st->st_mode = attributes_of_file->permissions;
    st->st_nlink = 1; // FIXME
    st->st_size = attributes_of_file->size;
@@ -243,13 +242,31 @@ void ssh_backend::get_attributes(const char* path, struct stat* st)
 
 bool ssh_backend::file_exists(const char* path)
 {
+   sftp_attributes attributes_of_file = sftp_stat(_sftp_session, path);
 
+   if(attributes_of_file == NULL)
+   {
+    fprintf(stderr, "SSH error: code %s.\n", ssh_get_error(_session));
+    fprintf(stderr, "SFTP error: code %d.\n", sftp_get_error(_sftp_session));
+    return false;
+   }
+
+   return true;
 }
 
 
 bool ssh_backend::directory_exists(const char* path)
 {
+   sftp_attributes attributes_of_dir = sftp_stat(_sftp_session, path);
 
+   if(attributes_of_dir == NULL)
+   {
+    fprintf(stderr, "SSH error: code %s.\n", ssh_get_error(_session));
+    fprintf(stderr, "SFTP error: code %d.\n", sftp_get_error(_sftp_session));
+    return false;
+   }
+
+   return true;
 }
 
 
@@ -275,7 +292,7 @@ void ssh_backend::rename_file(const char* path, const char* new_path)
 void ssh_backend::create_directory(const char* path, mode_t new_mode)
 {
     printf("calling ssh_backend::create_directory \n");
-    int rc = sftp_mkdir( _sftp_session, "new_dir", S_IRWXU );
+    int rc = sftp_mkdir( _sftp_session, path, S_IRWXU );
     if(rc != SSH_OK)
     {
        if(sftp_get_error(_sftp_session) != SSH_FX_FILE_ALREADY_EXISTS)
