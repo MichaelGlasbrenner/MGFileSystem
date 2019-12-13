@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <time.h>
-#include <string.h>
+#include <string>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -14,6 +14,7 @@ ssh_backend mg_filesystem_data;
 
 ssh_backend::ssh_backend()
 {
+   _mount_dir = "/home/michael/ssh_backend/"; // FIXME
    this->establish_ssh_connection();
 
 }
@@ -58,7 +59,7 @@ void ssh_backend::establish_ssh_connection()
    rc = this->init_sftp_session();
    if(rc != SSH_OK)
    {
-       fprintf(stderr, "SFTP error: %s \n", sftp_get_error(_sftp_session));
+       fprintf(stderr, "SFTP error: %d \n", sftp_get_error(_sftp_session));
    } 
     
    //rc = sftp_mkdir( _sftp_session, "new_dir2", S_IRWXU );
@@ -79,6 +80,7 @@ void ssh_backend::establish_ssh_connection()
    //this->remote_command(_session, "pwd");
    //this->remote_command(_session, "pwd");
    //this->remote_command(_session, "pwd");
+
 
 
    //fflush(stdout);
@@ -207,6 +209,47 @@ void ssh_backend::close_sftp_session()
 
 void ssh_backend::list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler)
 {
+    sftp_dir dir;
+    sftp_attributes file;
+    printf("requested path: %s \n", this->get_full_path(path).c_str() );
+
+    /* the connection is made */
+    /* opening a directory */
+    dir = sftp_opendir(_sftp_session, this->get_full_path(path).c_str() );
+    if (!dir) 
+    {
+        fprintf(stderr, "Directory not opened(%s)\n", ssh_get_error(_session));
+        return;
+    }
+
+    /* reading the whole directory, file by file */
+    while ((file = sftp_readdir( _sftp_session, dir))) 
+    {
+        /*fprintf(stderr, "%30s(%.8o) : %s(%.5d) %s(%.5d) : %.10llu bytes\n",
+                file->name,
+                file->permissions,
+                file->owner,
+                file->uid,
+                file->group,
+                file->gid,
+                (long long unsigned int) file->size);*/
+        filler(buffer, file->name, NULL, 0 );
+        sftp_attributes_free(file);
+    }
+
+    /* when file = NULL, an error has occured OR the directory listing is end of
+     * file */
+    if (!sftp_dir_eof(dir)) 
+    {
+        fprintf(stderr, "Error: %s\n", ssh_get_error(_session));
+        return;
+    }
+
+    if (sftp_closedir(dir)) 
+    {
+        fprintf(stderr, "Error: %s\n", ssh_get_error(_session));
+        return;
+    }
 
 }
 
@@ -219,8 +262,7 @@ char* ssh_backend::read_file_content(const char *path)
 
 void ssh_backend::get_attributes(const char* path, struct stat* st)
 {
-   //sftp_attributes attributes_of_file = sftp_stat(_sftp_session, path);
-   sftp_attributes attributes_of_file = sftp_stat(_sftp_session, "new_dir");
+   sftp_attributes attributes_of_file = sftp_stat(_sftp_session, this->get_full_path(path).c_str() );
 
    if(attributes_of_file == NULL)
    {
@@ -242,7 +284,9 @@ void ssh_backend::get_attributes(const char* path, struct stat* st)
 
 bool ssh_backend::file_exists(const char* path)
 {
-   sftp_attributes attributes_of_file = sftp_stat(_sftp_session, path);
+   sftp_attributes attributes_of_file = sftp_stat(_sftp_session, this->get_full_path(path).c_str() );
+   printf("determining if file with path %s exists **************************\n", this->get_full_path(path).c_str());
+   printf("answer : %s ************************\n", (attributes_of_file == NULL) ? "false" : "true" );
 
    if(attributes_of_file == NULL)
    {
@@ -257,7 +301,9 @@ bool ssh_backend::file_exists(const char* path)
 
 bool ssh_backend::directory_exists(const char* path)
 {
-   sftp_attributes attributes_of_dir = sftp_stat(_sftp_session, path);
+   sftp_attributes attributes_of_dir = sftp_stat(_sftp_session, this->get_full_path(path).c_str());
+   printf("determining if directory with path %s exists **************************\n", this->get_full_path(path).c_str());
+   printf("answer : %s ************************\n", (attributes_of_dir == NULL) ? "false" : "true" );
 
    if(attributes_of_dir == NULL)
    {
@@ -273,7 +319,11 @@ bool ssh_backend::directory_exists(const char* path)
 
 void ssh_backend::set_file_mode(const char* path, mode_t new_mode)
 {
-
+    int rc = sftp_chmod( _sftp_session, this->get_full_path(path).c_str(), new_mode);
+    if(rc != SSH_OK)
+    {
+        fprintf(stderr, "sfpt_chmod failed: %s \n", ssh_get_error(_session));
+    } 
 }
 
 
@@ -292,7 +342,7 @@ void ssh_backend::rename_file(const char* path, const char* new_path)
 void ssh_backend::create_directory(const char* path, mode_t new_mode)
 {
     printf("calling ssh_backend::create_directory \n");
-    int rc = sftp_mkdir( _sftp_session, path, S_IRWXU );
+    int rc = sftp_mkdir( _sftp_session, this->get_full_path(path).c_str(), S_IRWXU );
     if(rc != SSH_OK)
     {
        if(sftp_get_error(_sftp_session) != SSH_FX_FILE_ALREADY_EXISTS)
@@ -340,3 +390,8 @@ void ssh_backend::debug()
 }
 
 
+std::string ssh_backend::get_full_path(const char* path)
+{
+    std::string full_path = _mount_dir + std::string("/") + std::string(path);
+    return full_path;
+}

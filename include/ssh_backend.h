@@ -5,6 +5,7 @@
 #include "storage_backend.h"
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
+#include <string>
 
 /*
  *  ssh-based remote file-system
@@ -38,6 +39,7 @@ class ssh_backend : public storage_backend
     private:
        ssh_session _session;
        sftp_session _sftp_session;
+       std::string _mount_dir;
        
     private:
        void establish_ssh_connection();
@@ -47,6 +49,7 @@ class ssh_backend : public storage_backend
        int send_remote_command(ssh_session session, const char* command);
        int init_sftp_session();
        void close_sftp_session();
+       std::string get_full_path(const char* path);
 };
 
 

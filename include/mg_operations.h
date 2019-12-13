@@ -67,6 +67,8 @@ static int mg_getattr( const char *path, struct stat *st )
 static int mg_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi )
 {
     printf("\n\n");
+    printf("\n\ncalling mg_readdir ***********************************\n");
+    printf("\n\n");
     printf( "--> Getting The List of Files of %s ***********\n", path );
 
     filler( buffer, ".", NULL, 0 ); // Current Directory
