@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <string>
+#include <cstring>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -41,7 +42,8 @@ void ssh_backend::establish_ssh_connection()
 
    //ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.112");
    //ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
-   ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.100");
+   //ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.100");
+   ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.114");
    ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
    //ssh_options_set( _session, SSH_OPTIONS_HOST, "10.0.101.1");
    //ssh_options_set( _session, SSH_OPTIONS_USER, "mglasbre");
@@ -61,14 +63,14 @@ void ssh_backend::establish_ssh_connection()
    {
        fprintf(stderr, "SFTP error: %d \n", sftp_get_error(_sftp_session));
    } 
-    
+
    //rc = sftp_mkdir( _sftp_session, "new_dir2", S_IRWXU );
    //rc = sftp_mkdir( _sftp_session, "/home/michael/Programmierung/C++/MyFileSystem/tests/testdir/new_dir2", S_IRWXU );
    if(rc != SSH_OK)
    {
        if(sftp_get_error(_sftp_session) != SSH_FX_FILE_ALREADY_EXISTS)
        {
-	   fprintf(stderr, "Can't create directory: %s \n", ssh_get_error(_session));
+           fprintf(stderr, "Can't create directory: %s \n", ssh_get_error(_session));
        }
    } 
 
@@ -97,8 +99,8 @@ int ssh_backend::password_authentication(ssh_session session)
     rc = ssh_userauth_password( session, NULL, password);
     if(rc == SSH_AUTH_ERROR)
     {
-       fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
-       return SSH_AUTH_ERROR;
+        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
+        return SSH_AUTH_ERROR;
     }
 
     return rc;
@@ -112,8 +114,8 @@ int ssh_backend::public_key_authentication(ssh_session session)
     rc = ssh_userauth_publickey_auto( session, NULL, NULL);
     if(rc == SSH_AUTH_ERROR)
     {
-       fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
-       return SSH_AUTH_ERROR;
+        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
+        return SSH_AUTH_ERROR;
     }
 
     return rc;
@@ -122,12 +124,12 @@ int ssh_backend::public_key_authentication(ssh_session session)
 
 void ssh_backend::remote_command(ssh_session session, const char* command)
 {
-   int remote_success = this->send_remote_command(_session, command);
-   if(remote_success != SSH_OK)
-   {
-      fprintf(stderr, "Error in establishing send_remote_command : %s \n", ssh_get_error( _session ));
-      exit(-1);
-   }
+    int remote_success = this->send_remote_command(_session, command);
+    if(remote_success != SSH_OK)
+    {
+        fprintf(stderr, "Error in establishing send_remote_command : %s \n", ssh_get_error( _session ));
+        exit(-1);
+    }
 }
 
 
@@ -139,36 +141,36 @@ int ssh_backend::send_remote_command(ssh_session session, const char* command)
     int nbytes;
     channel = ssh_channel_new(session);
     if (channel == NULL)
-	return SSH_ERROR;
+        return SSH_ERROR;
     rc = ssh_channel_open_session(channel);
     if (rc != SSH_OK)
     {
-	ssh_channel_free(channel);
-	return rc;
+        ssh_channel_free(channel);
+        return rc;
     }
     rc = ssh_channel_request_exec(channel, command);
     if (rc != SSH_OK)
     {
-	ssh_channel_close(channel);
-	ssh_channel_free(channel);
-	return rc;
+        ssh_channel_close(channel);
+        ssh_channel_free(channel);
+        return rc;
     }
     nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
     while (nbytes > 0)
     {
-	if (write(1, buffer, nbytes) != (unsigned int) nbytes)
-	{
-	    ssh_channel_close(channel);
-	    ssh_channel_free(channel);
-	    return SSH_ERROR;
-	}
-	nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+        if (write(1, buffer, nbytes) != (unsigned int) nbytes)
+        {
+            ssh_channel_close(channel);
+            ssh_channel_free(channel);
+            return SSH_ERROR;
+        }
+        nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
     }
     if (nbytes < 0)
     {
-	ssh_channel_close(channel);
-	ssh_channel_free(channel);
-	return SSH_ERROR;
+        ssh_channel_close(channel);
+        ssh_channel_free(channel);
+        return SSH_ERROR;
     }
     ssh_channel_send_eof(channel);
     ssh_channel_close(channel);
@@ -254,9 +256,33 @@ void ssh_backend::list_files_in_dir(const char *path, void *buffer, fuse_fill_di
 }
 
 
-char* ssh_backend::read_file_content(const char *path)
+char* ssh_backend::read_file_content(const char *path, size_t offset, size_t size)
 {
+    sftp_file the_file = sftp_open (_sftp_session, this->get_full_path(path).c_str(), O_RDONLY, 0);
+    if (the_file == NULL) 
+    {
+        fprintf(stderr, "Error in ssh_backend::read_file_content: %s\n", ssh_get_error(_session));
+    }
 
+    int rc = sftp_seek (the_file, offset);
+    if (rc != SSH_OK)
+    {
+        fprintf(stderr, "Error in sftp_seek: %d.\n", sftp_get_error(_sftp_session));
+    }
+
+    char* buffer = new char[size];
+    ssize_t read_size = sftp_read (the_file, buffer, size);
+    if(read_size < 0)
+    {
+        fprintf(stderr, "Error in sftp_read: %s\n", ssh_get_error(_session));
+    }
+
+    char* output_array = new char[read_size];
+    memcpy( output_array, buffer, read_size );
+    delete[] buffer;
+
+    sftp_close(the_file);
+    return output_array;
 }
 
 
@@ -329,20 +355,43 @@ void ssh_backend::set_file_mode(const char* path, mode_t new_mode)
 
 void ssh_backend::write_file_content(const char* path, const char* data, size_t size, off_t offset)
 {
+    sftp_file the_file = sftp_open (_sftp_session, this->get_full_path(path).c_str(), O_WRONLY, 0);
+    if (the_file == NULL) 
+    {
+        fprintf(stderr, "Error in ssh_backend::write_file_content: %s\n", ssh_get_error(_session));
+    }
 
+    int rc = sftp_seek (the_file, offset);
+    if (rc != SSH_OK)
+    {
+        fprintf(stderr, "Error in sftp_seek: %d.\n", sftp_get_error(_sftp_session));
+    }
+
+    ssize_t number_of_bytes_written = sftp_write(the_file, data, size);
+    if(number_of_bytes_written < 0)
+    {
+        fprintf(stderr, "Error in sftp_read: %s\n", ssh_get_error(_session));
+    }
+
+    sftp_close(the_file);
 }
 
 
 void ssh_backend::rename_file(const char* path, const char* new_path)
 {
+   int rc = sftp_rename(_sftp_session, this->get_full_path(path).c_str(), this->get_full_path(new_path).c_str());
 
+   if(rc != SSH_OK)
+   {
+       fprintf(stderr, "Error in ssh_backend::rename_file: %s \n", ssh_get_error(_session));
+   } 
 }
 
 
 void ssh_backend::create_directory(const char* path, mode_t new_mode)
 {
     printf("calling ssh_backend::create_directory \n");
-    int rc = sftp_mkdir( _sftp_session, this->get_full_path(path).c_str(), S_IRWXU );
+    int rc = sftp_mkdir( _sftp_session, this->get_full_path(path).c_str(), new_mode );
     if(rc != SSH_OK)
     {
        if(sftp_get_error(_sftp_session) != SSH_FX_FILE_ALREADY_EXISTS)
@@ -353,21 +402,52 @@ void ssh_backend::create_directory(const char* path, mode_t new_mode)
 }
 
 
+void ssh_backend::remove_directory(const char* path)
+{
+    printf("calling ssh_backend::remove_directory \n");
+    int rc = sftp_rmdir( _sftp_session, this->get_full_path(path).c_str());
+    if(rc != SSH_OK)
+    {
+        fprintf(stderr, "Removing directory failed: %s \n", ssh_get_error(_session));
+    } 
+}
+
+
 void ssh_backend::remove_file(const char* path)
 {
+    int rc = sftp_unlink (_sftp_session, this->get_full_path(path).c_str());
+    if (rc != SSH_OK)
+    {
+        fprintf(stderr, "Error in ssh_backend::remove_file: code %d.\n", sftp_get_error(_sftp_session));
+    }
 
 }
 
 
 void ssh_backend::create_file(const char* path, mode_t new_mode)
 {
-
+   sftp_file new_file = sftp_open ( _sftp_session, this->get_full_path(path).c_str(), O_CREAT, new_mode);
+   if (new_file == NULL) 
+   {
+        fprintf(stderr, "Error in ssh_backend::create_file: %s\n", ssh_get_error(_session));
+   }
+   sftp_close(new_file);
 }
 
 
-void ssh_backend::set_access_and_modification_times(const char* path, const struct timespec tv[2])
+void ssh_backend::set_access_and_modification_times(const char* path, const struct timespec ts[2])
 {
+    struct timeval tv[2];
+    tv[0].tv_sec = ts[0].tv_sec;
+    tv[0].tv_usec = ts[0].tv_nsec / 1000;
+    tv[1].tv_sec = ts[1].tv_sec;
+    tv[1].tv_usec = ts[1].tv_nsec / 1000;
 
+    int rc = sftp_utimes (_sftp_session, this->get_full_path(path).c_str(), tv);
+    if (rc != SSH_OK)
+    {
+        fprintf(stderr, "Error in ssh_backend::set_access_and_modification_times: code %d.\n", sftp_get_error(_sftp_session));
+    }
 }
 
 
@@ -379,7 +459,11 @@ void ssh_backend::truncate_file(const char* path, off_t new_length)
 
 void ssh_backend::change_ownership(const char* path, uid_t new_user, gid_t new_group)
 {
-
+    int rc = sftp_chown( _sftp_session, this->get_full_path(path).c_str(), new_user, new_group);
+    if(rc != SSH_OK)
+    {
+        fprintf(stderr, "sfpt_chown failed: %s \n", ssh_get_error(_session));
+    } 
 }
 
 

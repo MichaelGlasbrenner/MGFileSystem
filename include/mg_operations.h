@@ -92,7 +92,7 @@ static int mg_read( const char *path, char *buffer, size_t size, off_t offset, s
 
     if ( mg_filesystem_data.file_exists(path) == true)
     {
-        selectedText = mg_filesystem_data.read_file_content(path);
+        selectedText = mg_filesystem_data.read_file_content(path, offset, size);
     }
     else
     {
@@ -100,9 +100,12 @@ static int mg_read( const char *path, char *buffer, size_t size, off_t offset, s
         return -ENOENT;
     }
 
-    memcpy( buffer, selectedText + offset, size );
+    memcpy( buffer, selectedText, size );
 
-    return strlen( selectedText ) - offset;
+    size_t read_size = strlen( selectedText );
+
+    delete[] selectedText;
+    return read_size;
 }
 
 
@@ -239,10 +242,12 @@ int mg_readlink (const char *, char *, size_t)
 }
 
 
-int mg_rmdir (const char *)
+int mg_rmdir (const char* path)
 {
     printf("\n\n");
     printf("\n\ncalling mg_rmdir *******************************\n");
+    
+    mg_filesystem_data.remove_directory(path);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;

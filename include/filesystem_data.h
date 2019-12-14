@@ -41,7 +41,7 @@ class filesystem_data
        filesystem_data();
 
        void list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler);
-       char* read_file_content(const char *path);
+       char* read_file_content(const char *path, size_t offset, size_t read_size);
        void get_attributes(const char* path, struct stat* st);
        bool file_exists(const char* path);
        bool directory_exists(const char* path);

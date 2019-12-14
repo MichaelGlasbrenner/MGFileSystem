@@ -19,7 +19,7 @@ class ssh_backend : public storage_backend
        ~ssh_backend();
 
        void list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler);
-       char* read_file_content(const char *path);
+       char* read_file_content(const char *path, size_t offset, size_t read_size);
        void get_attributes(const char* path, struct stat* st);
        bool file_exists(const char* path);
        bool directory_exists(const char* path);
@@ -28,6 +28,7 @@ class ssh_backend : public storage_backend
        void write_file_content(const char* path, const char* data, size_t size, off_t offset) ;
        void rename_file(const char* path, const char* new_path);
        void create_directory(const char* path, mode_t new_mode);
+       void remove_directory(const char* path);
        void remove_file(const char* path);
        void create_file(const char* path, mode_t new_mode);
        void set_access_and_modification_times(const char* path, const struct timespec tv[2]);

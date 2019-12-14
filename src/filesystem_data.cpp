@@ -63,20 +63,20 @@ void filesystem_data::list_files_in_dir(const char *path, void *buffer, fuse_fil
 
    this->debug();
 
-   for(int i=0; i < _the_directories.at(directory_index)._contained_directories.size(); ++i)
+   for(size_t i=0; i < _the_directories.at(directory_index)._contained_directories.size(); ++i)
    {
       printf("listing contained directory : %s \n", _the_directories.at(directory_index)._contained_directories.at(i)->_directory_file._name.c_str());
       filler(buffer, _the_directories.at(directory_index)._contained_directories.at(i)->_directory_file._name.c_str(), NULL, 0 );
    }
    
-   for(int i=0; i < _the_files.size(); ++i)
+   for(size_t i=0; i < _the_files.size(); ++i)
    {
       filler(buffer, _the_files[i]._name.c_str(), NULL, 0 );
    }
 }
 
 
-char* filesystem_data::read_file_content(const char *path)
+char* filesystem_data::read_file_content(const char *path, size_t offset, size_t read_size)
 {
    printf("calling filesystem_data::read_file_content ********************************** \n");
 
@@ -84,11 +84,17 @@ char* filesystem_data::read_file_content(const char *path)
 
    assert(index >= 0);
 
+   // FIXME : check for EOF
    char* the_content = new char[_the_files[index]._content.length()];
            
    strcpy(the_content, _the_files[index]._content.c_str());
 
-   return the_content;
+   char* buffer = new char[read_size];
+   memcpy( buffer, the_content + offset, read_size );
+
+   delete the_content;
+
+   return buffer;
 }
 
 
@@ -174,7 +180,7 @@ void filesystem_data::write_file_content(const char* path, const char* new_data,
    std::string full_input = std::string(new_data);
    std::string string_for_writing = full_input.substr (0, size);
 
-   if(offset > _the_files[index]._content.size())
+   if((size_t)offset > _the_files[index]._content.size())
    {
       printf("inserting content with resizing\n");
       _the_files[index]._content.resize(offset);
@@ -291,7 +297,7 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
 
    int dir_index = this->get_index_for_dirname(the_dir_name.c_str());
    assert(dir_index >= 0);
-   assert(dir_index < _the_directories.size());
+   assert(dir_index < (int)_the_directories.size());
 
    simple_directory& the_dir = _the_directories[ dir_index ];
 
@@ -328,12 +334,12 @@ void filesystem_data::create_file(const char* path, mode_t new_mode)
 int filesystem_data::get_index_for_filename(const char* path)
 {
    printf("entering filesystem_data::get_index_for_filename with path = %s", path);
-   for(int i=0; i < _the_files.size(); ++i)
+   for(size_t i=0; i < _the_files.size(); ++i)
    {
        printf("comparing %s to %s \n", path, _the_files[i]._path.c_str() );
        if(strcmp( path, _the_files[i]._path.c_str() ) == 0)
        {
-           printf("the are equal !!! -> result : %d \n", i);
+           printf("the are equal !!! -> result : %zu \n", i);
            return i;
        }
    }
@@ -356,12 +362,12 @@ int filesystem_data::get_index_for_dirname(const char* path)
        dir_path = dir_path.substr(0, dir_path.length() - 1);
    }
    
-   for(int i=0; i < _the_directories.size(); ++i)
+   for(size_t i=0; i < _the_directories.size(); ++i)
    {
        printf("comparing %s to %s \n", dir_path.c_str(), _the_directories[i]._directory_file._path.c_str() );
        if(strcmp( dir_path.c_str(), _the_directories[i]._directory_file._path.c_str() ) == 0)
        {
-           printf("the are equal !!! -> result : %d \n", i);
+           printf("the are equal !!! -> result : %zu \n", i);
            return i;
        }
    }
@@ -453,14 +459,14 @@ void filesystem_data::debug()
    printf("\n\n===============  MG_FILESYSTEM DEBUG START =================================\n\n");
 
    printf("files in filesystem_data : \n\n");
-   for(int i=0; i < _the_files.size(); ++i)
+   for(size_t i=0; i < _the_files.size(); ++i)
    {
        printf("path : %s ; name : %s ; content : %s \n", _the_files[i]._path.c_str(), _the_files[i]._name.c_str(), 
                                                          _the_files[i]._content.c_str());
    }
 
    printf("directories : \n\n");
-   for(int i=0; i < _the_directories.size(); ++i)
+   for(size_t i=0; i < _the_directories.size(); ++i)
    {
        simple_file& dirfile = _the_directories.at(i)._directory_file;
 
