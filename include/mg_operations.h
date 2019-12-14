@@ -71,13 +71,10 @@ static int mg_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, o
     printf("\n\n");
     printf( "--> Getting The List of Files of %s ***********\n", path );
 
-    filler( buffer, ".", NULL, 0 ); // Current Directory
-    filler( buffer, "..", NULL, 0 ); // Parent Directory
+    //filler( buffer, ".", NULL, 0 ); // Current Directory
+    //filler( buffer, "..", NULL, 0 ); // Parent Directory
 
-    if ( strcmp( path, "/" ) == 0 ) // If the user is trying to show the files/directories of the root directory show the following
-    {
-        mg_filesystem_data.list_files_in_dir(path, buffer, filler);
-    }
+    mg_filesystem_data.list_files_in_dir(path, buffer, filler);
 
     return 0;
 }
