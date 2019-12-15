@@ -4,25 +4,25 @@ sudo apt-get install fuse libfuse-dev
 
 ---installation of libssh-library:---
 
-Download and extract libssh
-mkdir build
-cd build/
-sudo apt-get install libssl-dev
-sudo apt-get install libcmocka-dev
-cmake -DUNIT_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..
-make
-sudo make install # -> puts headers to /usr/include/libssh/ and binary to /usr/lib/x86_64-linux-gnu/
+Download and extract libssh\
+mkdir build\
+cd build/\
+sudo apt-get install libssl-dev\
+sudo apt-get install libcmocka-dev\
+cmake -DUNIT_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..\
+make\
+sudo make install # -> puts headers to /usr/include/libssh/ and binary to /usr/lib/x86_64-linux-gnu/\
 
 ---installation of MGfilesystem---
 
-cmake .
+cmake .\
 make
 
 ****************************************************
 
 *** Running the program ***
 
-./bin/MGfilesystem -d mountpoint
+./bin/MGfilesystem -d mountpoint\
 
 
 

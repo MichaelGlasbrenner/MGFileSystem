@@ -43,7 +43,7 @@ void ssh_backend::establish_ssh_connection()
    //ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.112");
    //ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
    //ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.100");
-   ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.114");
+   ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.112");
    ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
    //ssh_options_set( _session, SSH_OPTIONS_HOST, "10.0.101.1");
    //ssh_options_set( _session, SSH_OPTIONS_USER, "mglasbre");
