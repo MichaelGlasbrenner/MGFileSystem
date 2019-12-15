@@ -18,6 +18,9 @@ class ssh_backend : public storage_backend
        ssh_backend();
        ~ssh_backend();
 
+       bool init(const std::string& mount_dir, const std::string& ip_addr, const std::string& remote_user,
+                 const std::string& authentication_method);
+       void clean_up();
        void list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler);
        char* read_file_content(const char *path, size_t offset, size_t read_size);
        void get_attributes(const char* path, struct stat* st);
@@ -43,7 +46,8 @@ class ssh_backend : public storage_backend
        std::string _mount_dir;
        
     private:
-       void establish_ssh_connection();
+       void establish_ssh_connection(const std::string& ip_addr, const std::string& remote_user, 
+                                     const std::string& authentication_method);
        int password_authentication(ssh_session session);
        int public_key_authentication(ssh_session session);
        void remote_command(ssh_session session, const char* command);

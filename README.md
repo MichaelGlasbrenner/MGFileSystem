@@ -1,6 +1,9 @@
 *** Installation (tested on Ubuntu 18.04.3 LTS): ***
 
-sudo apt-get install fuse libfuse-dev
+---installation of fuse and tclap---
+
+sudo apt-get install fuse libfuse-dev\
+sudo apt-get install libtclap-dev
 
 ---installation of libssh-library:---
 
@@ -11,7 +14,7 @@ sudo apt-get install libssl-dev\
 sudo apt-get install libcmocka-dev\
 cmake -DUNIT_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..\
 make\
-sudo make install # -> puts headers to /usr/include/libssh/ and binary to /usr/lib/x86_64-linux-gnu/\
+sudo make install # -> puts headers to /usr/include/libssh/ and binary to /usr/lib/x86_64-linux-gnu/
 
 ---installation of MGfilesystem---
 
@@ -22,7 +25,7 @@ make
 
 *** Running the program ***
 
-./bin/MGfilesystem -d mountpoint\
+./bin/MGfilesystem -d mountpoint
 
 
 
@@ -30,15 +33,14 @@ make
 ****************************************************
 
 
-Supported Filesystem Operations:
-    - list files with ls/ll
-    - read file content with cat
-    - overwrite file with echo "..." > 
-    - append content to file with echo "..." >> 
-    - open file in VI
-    - modify and save file in VI
-    - rename files with mv
-    - remove files with rm
-    - change file permissions with chmod
-    - 
+Supported Filesystem Operations:\
+    - list files with ls/ll\
+    - read file content with cat\
+    - overwrite file with echo "..." > \
+    - append content to file with echo "..." >> \
+    - open file in VI\
+    - modify and save file in VI\
+    - rename files with mv\
+    - remove files with rm\
+    - change file permissions with chmod\
 

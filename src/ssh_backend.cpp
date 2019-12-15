@@ -10,28 +10,49 @@
 #include <assert.h>
 
 
-
 ssh_backend mg_filesystem_data;
+
 
 ssh_backend::ssh_backend()
 {
-   _mount_dir = "/home/michael/ssh_backend/"; // FIXME
-   this->establish_ssh_connection();
+   _session = NULL;
+   _sftp_session = NULL;
+}
 
+
+bool ssh_backend::init(const std::string& mount_dir, const std::string& ip_addr, const std::string& remote_user,
+                       const std::string& authentication_method)
+{
+   _mount_dir = mount_dir; 
+
+   this->establish_ssh_connection(ip_addr, remote_user, authentication_method);
+
+   return true; // FIXME
+}
+
+
+void ssh_backend::clean_up()
+{
+    if(_sftp_session != NULL)
+    {
+        this->close_sftp_session();
+    }
+ 
+    if(_session != NULL)
+    {
+        ssh_disconnect( _session );
+        ssh_free(_session);
+    }
 }
 
 
 ssh_backend::~ssh_backend()
 {
-    this->close_sftp_session();
-
-    ssh_disconnect( _session );
-    ssh_free(_session);
-
 }
 
 
-void ssh_backend::establish_ssh_connection()
+void ssh_backend::establish_ssh_connection(const std::string& ip_addr, const std::string& remote_user, 
+                                           const std::string& authentication_method)
 {
    _session = ssh_new();
 
@@ -40,23 +61,29 @@ void ssh_backend::establish_ssh_connection()
        exit(-1);
    }
 
-   //ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.112");
-   //ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
-   //ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.100");
-   ssh_options_set( _session, SSH_OPTIONS_HOST, "192.168.2.112");
-   ssh_options_set( _session, SSH_OPTIONS_USER, "michael");
-   //ssh_options_set( _session, SSH_OPTIONS_HOST, "10.0.101.1");
-   //ssh_options_set( _session, SSH_OPTIONS_USER, "mglasbre");
+   ssh_options_set( _session, SSH_OPTIONS_HOST, ip_addr.c_str());
+   ssh_options_set( _session, SSH_OPTIONS_USER, remote_user.c_str());
 
    int rc = ssh_connect( _session );
    if(rc != SSH_OK)
    {
-      fprintf(stderr, "Error in establishing ssh connection : %s \n", ssh_get_error( _session ));
-      exit(-1);
+       fprintf(stderr, "Error in establishing ssh connection : %s \n", ssh_get_error( _session ));
+       exit(-1);
    }
 
-   this->password_authentication(_session);
-   //this->public_key_authentication(_session);
+   if(authentication_method == "pw")
+   {
+       this->password_authentication(_session);
+   }
+   else if(authentication_method == "key")
+   {
+       this->public_key_authentication(_session);
+   }
+   else
+   {
+       fprintf(stderr, "Unsupported authentication method : %s \n", authentication_method.c_str());
+       exit(-1);
+   }
 
    rc = this->init_sftp_session();
    if(rc != SSH_OK)
@@ -100,7 +127,7 @@ int ssh_backend::password_authentication(ssh_session session)
     if(rc == SSH_AUTH_ERROR)
     {
         fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
-        return SSH_AUTH_ERROR;
+        exit(-1);
     }
 
     return rc;
@@ -115,7 +142,7 @@ int ssh_backend::public_key_authentication(ssh_session session)
     if(rc == SSH_AUTH_ERROR)
     {
         fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
-        return SSH_AUTH_ERROR;
+        exit(-1);
     }
 
     return rc;
@@ -127,7 +154,7 @@ void ssh_backend::remote_command(ssh_session session, const char* command)
     int remote_success = this->send_remote_command(_session, command);
     if(remote_success != SSH_OK)
     {
-        fprintf(stderr, "Error in establishing send_remote_command : %s \n", ssh_get_error( _session ));
+        fprintf(stderr, "Error in send_remote_command : %s \n", ssh_get_error( _session ));
         exit(-1);
     }
 }
