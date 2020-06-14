@@ -1,7 +1,30 @@
+distributed filesystem:
+- file writes are accompanied by an rsync to the secondary storage nodes 
+
+implement a FSmanager daemon, which runs on storage nodes and has the following tasks:
+- knowing which storage nodes are available and online
+- upon mounting, make a handshake with the clients
+- write needed information to files on the client machines and update these files
+- assign primary and secondary storages to the clients (for "equivalent nodes" do this randomly)
+- how to implement home and work with different replication levels ? -> use a separate filesystem, which 
+  nevertheless could be managed by the same daemon; for each filesystem, store the information about
+  the storage nodes  
+
+
+-------------------------------------------
+
+can different folders be mounted at the same time ?
+
 cp / mv does not update the timestamps !!
 
 after copy, the file permissions and ownerships or not identical !!
 
 one should not be able to copy file of a different user such as root
 
+adjust tests also for ssh-backend
 
+------------------------------------
+
+test on VMs:
+
+root-pw:"root", ip : 192.168.122.252
