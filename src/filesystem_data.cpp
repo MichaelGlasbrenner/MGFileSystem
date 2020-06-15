@@ -230,6 +230,13 @@ void filesystem_data::create_directory(const char* path, mode_t new_mode)
 }
 
 
+void filesystem_data::remove_directory(const char* path)
+{ 
+   // FIXME
+   printf("rmdir not implemented yet !\n");
+}
+
+
 void filesystem_data::rename_file(const char* path, const char* new_path)
 {
    int index_new_path = this->get_index_for_filename(new_path);

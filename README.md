@@ -25,9 +25,11 @@ make
 
 *** Running the program ***
 
+mounting the in-RAM filesystem:
 ./bin/MGfilesystem -d mountpoint
 
-
+mounting via the ssh backend:
+./bin/MGfilesystem --debug --mount-point=./mountdir --auth=pw --ssh=root@192.168.122.252:/root/testdir --backend=ssh
 
 
 ****************************************************

@@ -18,7 +18,8 @@
 #include <tclap/CmdLine.h>
 
 //extern filesystem_data mg_filesystem_data;
-extern ssh_backend mg_filesystem_data;
+//extern ssh_backend mg_filesystem_data;
+extern storage_backend* mg_filesystem_data;
 
 
 struct mg_fuse_operations : fuse_operations
@@ -72,6 +73,7 @@ int main( int argc, char *argv[] )
         TCLAP::CmdLine cmd("Command description message", delimiter, "0.9");
 
         std::vector<std::string> allowed_backends;
+        allowed_backends.push_back("ram");
         allowed_backends.push_back("ssh");
         TCLAP::ValuesConstraint<std::string> allowedBackends( allowed_backends );    
 
@@ -121,27 +123,34 @@ int main( int argc, char *argv[] )
 
         if(which_backend == "ssh")
         {
-           if(ssh_dir.size() == 0)
-           {
-               printf("ssh mount argument missing\n");
-               exit(-1);
-           }
+            mg_filesystem_data = new ssh_backend();
 
-           // parsing address of form <user>@<ip-addr>:<directory>
-           std::string remote_user = ssh_dir.substr(0, ssh_dir.find("@"));
-           std::string ip_addr =  ssh_dir.substr(ssh_dir.find("@")+1, ssh_dir.find(":")-ssh_dir.find("@")-1);
-           std::string remote_dir =  ssh_dir.substr(ssh_dir.find(":")+1, ssh_dir.size()-ssh_dir.find(":"));
+            if(ssh_dir.size() == 0)
+            {
+                printf("ssh mount argument missing\n");
+                exit(-1);
+            }
 
-           if( remote_user.size() == 0 || ip_addr.size() == 0 || remote_dir.size() == 0)
-           {
-               printf("bad ssh mount argument\n");
-               exit(-1);
-           }
+            // parsing address of form <user>@<ip-addr>:<directory>
+            std::string remote_user = ssh_dir.substr(0, ssh_dir.find("@"));
+            std::string ip_addr =  ssh_dir.substr(ssh_dir.find("@")+1, ssh_dir.find(":")-ssh_dir.find("@")-1);
+            std::string remote_dir =  ssh_dir.substr(ssh_dir.find(":")+1, ssh_dir.size()-ssh_dir.find(":"));
 
-           printf("remote_user : %s \n", remote_user.c_str());
-           printf("ip : %s \n", ip_addr.c_str());
-           printf("remote_dir : %s \n", remote_dir.c_str());
-           mg_filesystem_data.init(remote_dir, ip_addr, remote_user, auth_method);
+            if( remote_user.size() == 0 || ip_addr.size() == 0 || remote_dir.size() == 0)
+            {
+                printf("bad ssh mount argument\n");
+                exit(-1);
+            }
+
+            printf("remote_user : %s \n", remote_user.c_str());
+            printf("ip : %s \n", ip_addr.c_str());
+            printf("remote_dir : %s \n", remote_dir.c_str());
+            ((ssh_backend*)mg_filesystem_data)->init(remote_dir, ip_addr, remote_user, auth_method);
+        }
+        else if(which_backend == "ram")
+        {
+            mg_filesystem_data = new filesystem_data();
+
         }
 
         // preparing fuse "command line" arguments
@@ -160,16 +169,18 @@ int main( int argc, char *argv[] )
             printf("fuse_argv[%d] : %s \n", i, fuse_argv[i]);
         }
     
-        return fuse_main( fuse_argc, fuse_argv, &mg_oper, NULL );
+        int return_code = fuse_main( fuse_argc, fuse_argv, &mg_oper, NULL );
 
         delete[] fuse_argv;
 
         if(which_backend == "ssh")
         {
-           mg_filesystem_data.clean_up();
+           ((ssh_backend*)mg_filesystem_data)->clean_up();
         }
 
-        //return return_code;
+        delete mg_filesystem_data;
+
+        return return_code; // FIXME
     }
     catch(TCLAP::ArgException& e)
     {

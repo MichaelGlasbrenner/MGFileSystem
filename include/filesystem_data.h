@@ -5,8 +5,9 @@
 #include <string>
 #include <map>
 #include <fuse.h>
+#include "storage_backend.h"
 
-class filesystem_data
+class filesystem_data : public storage_backend
 {
     public:
        struct simple_file
@@ -51,6 +52,7 @@ class filesystem_data
        void rename_file(const char* path, const char* new_path);
        void create_directory(const char* path, mode_t new_mode);
        void remove_file(const char* path);
+       void remove_directory(const char* path);
        void create_file(const char* path, mode_t new_mode);
        void set_access_and_modification_times(const char* path, const struct timespec tv[2]);
        void truncate_file(const char* path, off_t new_length);

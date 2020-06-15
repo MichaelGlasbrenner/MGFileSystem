@@ -12,6 +12,7 @@
 class storage_backend
 {
     public:
+       virtual ~storage_backend(){}
 
        virtual void list_files_in_dir(const char *path, void *buffer, fuse_fill_dir_t filler) = 0;
        virtual char* read_file_content(const char *path, size_t offset, size_t read_size) = 0;

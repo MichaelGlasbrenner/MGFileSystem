@@ -11,7 +11,7 @@
 #include "ssh_backend.h"
 
 // FIXME extern filesystem_data mg_filesystem_data;
-extern ssh_backend mg_filesystem_data;
+extern storage_backend* mg_filesystem_data;
 
 int counter = 0;
 
@@ -44,15 +44,15 @@ static int mg_getattr( const char *path, struct stat *st )
 
         return 0;
     }
-    else if ( mg_filesystem_data.file_exists(path) == true)
+    else if ( mg_filesystem_data->file_exists(path) == true)
     {
-        mg_filesystem_data.get_attributes(path, st);
+        mg_filesystem_data->get_attributes(path, st);
 
         return 0; // file exists
     }
-    else if ( mg_filesystem_data.directory_exists(path) == true)
+    else if ( mg_filesystem_data->directory_exists(path) == true)
     {
-        mg_filesystem_data.get_attributes(path, st);
+        mg_filesystem_data->get_attributes(path, st);
 
         return 0; // directory exists
     }
@@ -74,7 +74,7 @@ static int mg_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, o
     //filler( buffer, ".", NULL, 0 ); // Current Directory
     //filler( buffer, "..", NULL, 0 ); // Parent Directory
 
-    mg_filesystem_data.list_files_in_dir(path, buffer, filler);
+    mg_filesystem_data->list_files_in_dir(path, buffer, filler);
 
     return 0;
 }
@@ -87,9 +87,9 @@ static int mg_read( const char *path, char *buffer, size_t size, off_t offset, s
 
     char* selectedText;
 
-    if ( mg_filesystem_data.file_exists(path) == true)
+    if ( mg_filesystem_data->file_exists(path) == true)
     {
-        selectedText = mg_filesystem_data.read_file_content(path, offset, size);
+        selectedText = mg_filesystem_data->read_file_content(path, offset, size);
     }
     else
     {
@@ -111,7 +111,7 @@ static int mg_chmod(const char* path, mode_t new_mode)
     printf("\n\n");
     printf("\n\ncalling mg_chmod ***********************************\n");
 
-    mg_filesystem_data.set_file_mode(path, new_mode);
+    mg_filesystem_data->set_file_mode(path, new_mode);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -125,7 +125,7 @@ static int mg_write( const char* path, const char* buffer, size_t size, off_t of
     printf("size, offset : %zu %zu \n", size, offset);
     printf("the_buffer : %s \n", buffer);
 
-    mg_filesystem_data.write_file_content(path, buffer, size, offset);
+    mg_filesystem_data->write_file_content(path, buffer, size, offset);
 
     printf("op-count : %d \n", counter); counter++; 
     return size; // FIXME
@@ -137,7 +137,7 @@ static int mg_mkdir (const char* path, mode_t new_mode)
     printf("\n\n");
     printf("\n\ncalling mg_mkdir *******************************\n");
 
-    mg_filesystem_data.create_directory(path, new_mode);
+    mg_filesystem_data->create_directory(path, new_mode);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -147,12 +147,12 @@ static int mg_mkdir (const char* path, mode_t new_mode)
 static int mg_rename(const char* path, const char* new_name)
 {
     printf("\n\n");
-    mg_filesystem_data.debug();
+    mg_filesystem_data->debug();
 
     printf("\n\ncalling mg_rename *******************************\n");
-    mg_filesystem_data.rename_file(path, new_name);
+    mg_filesystem_data->rename_file(path, new_name);
 
-    mg_filesystem_data.debug();
+    mg_filesystem_data->debug();
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -164,7 +164,7 @@ static int mg_chown (const char* path, uid_t new_user, gid_t new_group)
     printf("\n\n");
     printf("\n\ncalling mg_chown *******************************\n");
 
-    mg_filesystem_data.change_ownership(path, new_user, new_group);
+    mg_filesystem_data->change_ownership(path, new_user, new_group);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -176,7 +176,7 @@ static int mg_truncate (const char* path, off_t new_length)
     printf("\n\n");
     printf("\n\ncalling mg_truncate *******************************\n");
 
-    mg_filesystem_data.truncate_file( path, new_length);
+    mg_filesystem_data->truncate_file( path, new_length);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -188,7 +188,7 @@ static int mg_unlink (const char* path)
     printf("\n\n");
     printf("\n\ncalling mg_unlink *******************************\n");
 
-    mg_filesystem_data.remove_file(path);
+    mg_filesystem_data->remove_file(path);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -200,7 +200,7 @@ static int mg_create (const char* path, mode_t new_mode, struct fuse_file_info *
     printf("\n\n");
     printf("\n\ncalling mg_create *******************************\n");
 
-    mg_filesystem_data.create_file(path, new_mode);
+    mg_filesystem_data->create_file(path, new_mode);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -222,7 +222,7 @@ static int mg_utimens (const char * path, const struct timespec tv[2])
     printf("\n\n");
     printf("\n\ncalling mg_utimens *******************************\n");
 
-    mg_filesystem_data.set_access_and_modification_times(path, tv);
+    mg_filesystem_data->set_access_and_modification_times(path, tv);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
@@ -244,7 +244,7 @@ int mg_rmdir (const char* path)
     printf("\n\n");
     printf("\n\ncalling mg_rmdir *******************************\n");
     
-    mg_filesystem_data.remove_directory(path);
+    mg_filesystem_data->remove_directory(path);
 
     printf("op-count : %d \n", counter); counter++; 
     return 0;
