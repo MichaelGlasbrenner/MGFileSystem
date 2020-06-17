@@ -5,7 +5,6 @@ import os
 
 def test_cp():
 
-    print("running test_cp");
     success = False;
     error_message = "";
         
@@ -20,8 +19,9 @@ def test_cp():
 
     with open('temp_output', "w") as outfile:
         file_content = test_tools.get_file_content("testdir/new_file2");
-	os.system("rm testdir/new_file"); 
-	os.system("rm testdir/new_file2"); 
+
+        os.system("rm testdir/new_file"); 
+        os.system("rm testdir/new_file2"); 
 
         if (len(file_content) == 1 and (file_content[0] == "this is the content")):
            success = True;

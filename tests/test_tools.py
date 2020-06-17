@@ -89,6 +89,10 @@ def get_file_property( which_property, file_name, output_of_ls ):
 
 def check_creation_time(file_name, output_of_ls):
     time_stamp = get_file_property( "timestamp", file_name, output_of_ls);
+    day = time_stamp.split()[1];
+    hours = time_stamp.split()[2].split(":")[0];
+    minutes = time_stamp.split()[2].split(":")[1];
+    print(time_stamp);
     print(datetime.datetime.now());
 
 

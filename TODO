@@ -23,6 +23,8 @@ one should not be able to copy file of a different user such as root
 
 adjust tests also for ssh-backend
 
+implement truncate for ssh-backend
+
 ------------------------------------
 
 test on VMs:

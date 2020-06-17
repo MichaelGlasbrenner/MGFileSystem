@@ -480,7 +480,8 @@ void ssh_backend::set_access_and_modification_times(const char* path, const stru
 
 void ssh_backend::truncate_file(const char* path, off_t new_length)
 {
-
+    // FIXME
+    printf("truncate not implemented \n");
 }
 
 
