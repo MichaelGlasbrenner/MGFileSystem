@@ -1,5 +1,6 @@
 distributed filesystem:
 - file writes are accompanied by an rsync to the secondary storage nodes 
+  or alternatively synchronization is done by unison
 
 implement a FSmanager daemon, which runs on storage nodes and has the following tasks:
 - knowing which storage nodes are available and online

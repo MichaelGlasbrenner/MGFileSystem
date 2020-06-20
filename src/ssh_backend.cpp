@@ -126,7 +126,7 @@ int ssh_backend::password_authentication(ssh_session session)
     rc = ssh_userauth_password( session, NULL, password);
     if(rc == SSH_AUTH_ERROR)
     {
-        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
+        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(session));
         exit(-1);
     }
 
@@ -141,7 +141,7 @@ int ssh_backend::public_key_authentication(ssh_session session)
     rc = ssh_userauth_publickey_auto( session, NULL, NULL);
     if(rc == SSH_AUTH_ERROR)
     {
-        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(_session));
+        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(session));
         exit(-1);
     }
 
@@ -151,10 +151,10 @@ int ssh_backend::public_key_authentication(ssh_session session)
 
 void ssh_backend::remote_command(ssh_session session, const char* command)
 {
-    int remote_success = this->send_remote_command(_session, command);
+    int remote_success = this->send_remote_command(session, command);
     if(remote_success != SSH_OK)
     {
-        fprintf(stderr, "Error in send_remote_command : %s \n", ssh_get_error( _session ));
+        fprintf(stderr, "Error in send_remote_command : %s \n", ssh_get_error( session ));
         exit(-1);
     }
 }

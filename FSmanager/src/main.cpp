@@ -14,6 +14,8 @@ using namespace std; // FIXME
 
 #define DAEMON_NAME "FSmanager"
 
+
+
 void process(){
 
     syslog (LOG_NOTICE, "Writing to my Syslog");
@@ -52,6 +54,9 @@ int main(int argc, char *argv[]) {
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
+
+    // create FSmanager object
+    FSmanager fsmanager();
 
     //----------------
     //Main Process
