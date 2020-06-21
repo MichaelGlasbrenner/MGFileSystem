@@ -1,9 +1,19 @@
 #include "FSmanager.h"
+#include <syslog.h>
 
 
 FSmanager::FSmanager()
 {
-   _log_file = fopen ("fsmanager.log", "w");
+   _log_file = fopen ("/home/michael/Programmierung/C++/MyFileSystem/FSmanager/fsmanager.log", "w");
+   if(_log_file == NULL)
+   {
+      syslog (LOG_NOTICE, "Failed to open log-file");
+      exit(-1);
+   }
+   syslog (LOG_NOTICE, " opened log-file");
+
+   fprintf(_log_file, "starting FSmanager\n\n");
+   fflush(_log_file);
 
    // FIXME
    // FIXME
@@ -13,10 +23,14 @@ FSmanager::FSmanager()
    _storage_nodes.push_back(storage_node("192.168.122.189"));
    _storage_nodes.push_back(storage_node("192.168.122.252"));
 
-   for(auto& node : _storage_nodes)
+   for(size_t i=0; i < _storage_nodes.size(); ++i)
    {
-       _storage_sessions.push_back(nullptr);
-       bool connect_worked = this->establish_ssh_connection( *(_storage_sessions.back()), node._ip, "root", "pw" );
+       auto& node = _storage_nodes[i];
+
+       ssh_session new_session = ssh_new();
+       _storage_sessions.push_back(new_session);
+       //bool connect_worked = true; // FIXME
+       bool connect_worked = this->establish_ssh_connection( _storage_sessions[i], node._ip, "root", "key" );
  
        if(connect_worked)
        {
@@ -29,26 +43,27 @@ FSmanager::FSmanager()
           fprintf(_log_file, "could not connect to storage node %s \n", node._ip.c_str());
        }
    }
+   fflush(_log_file);
 }
 
 
 FSmanager::~FSmanager()
 {
-    for(ssh_session* sessptr : _storage_sessions)
+    for(ssh_session sess : _storage_sessions)
     {
-        if(sessptr != NULL)
+        if(sess != NULL)
         {
-            ssh_disconnect( *sessptr );
-            ssh_free(*sessptr);
+            ssh_disconnect( sess );
+            ssh_free(sess);
         }
     }
 
-    for(ssh_session* sessptr : _client_sessions)
+    for(ssh_session sess : _client_sessions)
     {
-        if(sessptr != NULL)
+        if(sess != NULL)
         {
-            ssh_disconnect( *sessptr );
-            ssh_free(*sessptr);
+            ssh_disconnect( sess );
+            ssh_free(sess);
         }
     }
 
@@ -59,7 +74,84 @@ FSmanager::~FSmanager()
 
 void FSmanager::check_storage_nodes()
 {
+     std::string fs_path = "/root/local_filesystem"; // FIXME
+    
+     for(size_t i=0; i < _storage_nodes.size(); ++i)
+     {
+          auto& node = _storage_nodes[i];
+          ssh_session session = _storage_sessions[i]; 
 
+         std::string command = "ls -ltr " + fs_path;
+         ssh_channel channel;
+         int rc;
+         char buffer[256];
+         int nbytes;
+
+         channel = ssh_channel_new(session);
+         if (channel == NULL)
+         {
+             node._reachable = false;
+             node._responsive = false;
+             continue;
+         }
+
+         rc = ssh_channel_open_session(channel);
+         if (rc != SSH_OK)
+         {
+             ssh_channel_free(channel);
+             node._reachable = false;
+             node._responsive = false;
+             continue;
+         }
+
+         rc = ssh_channel_request_exec(channel, command.c_str());
+         if (rc != SSH_OK)
+         {
+             ssh_channel_close(channel);
+             ssh_channel_free(channel);
+
+             node._reachable = false;
+             node._responsive = false;
+             continue;
+         }
+
+         nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+
+         while (nbytes > 0)
+         {
+             if (write(1, buffer, nbytes) != (unsigned int) nbytes)
+             {
+                 ssh_channel_close(channel);
+                 ssh_channel_free(channel);
+
+                 node._reachable = false;
+                 node._responsive = false;
+                 continue;
+             }
+             nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+         }
+         if (nbytes < 0)
+         {
+             ssh_channel_close(channel);
+             ssh_channel_free(channel);
+
+             node._reachable = false;
+             node._responsive = false;
+             continue;
+         }
+
+         fprintf(_log_file, "buffer : %s \n", buffer);
+
+         ssh_channel_send_eof(channel);
+         ssh_channel_close(channel);
+         ssh_channel_free(channel);
+
+         node._reachable = false;
+         node._responsive = false;
+         continue;
+     }
+
+     this->print_status();
 }
 
 
@@ -68,6 +160,16 @@ void FSmanager::check_client_nodes()
 
 }
 
+
+void FSmanager::print_status()
+{
+    fprintf(_log_file, "\nfilesystem status: \n\n");
+
+    for(auto& node : _storage_nodes)
+    {
+        fprintf(_log_file, "%s %s %s \n", node._ip, (node._reachable ? "true" : "false"), (node._responsive ? "true" : "false"));
+    }
+}
 
 
 bool FSmanager::establish_ssh_connection(ssh_session& session, const std::string& ip_addr, const std::string& remote_user, 
@@ -86,21 +188,27 @@ bool FSmanager::establish_ssh_connection(ssh_session& session, const std::string
    int rc = ssh_connect( session );
    if(rc != SSH_OK)
    {
-       fprintf(stderr, "Error in establishing ssh connection : %s \n", ssh_get_error( session ));
+       fprintf(_log_file, "Error in establishing ssh connection : %s \n", ssh_get_error( session ));
        return false;
    }
 
    if(authentication_method == "pw")
    {
-       this->password_authentication(session);
+       rc = this->password_authentication(session);
    }
    else if(authentication_method == "key")
    {
-       this->public_key_authentication(session);
+       rc = this->public_key_authentication(session);
    }
    else
    {
-       fprintf(stderr, "Unsupported authentication method : %s \n", authentication_method.c_str());
+       fprintf(_log_file, "Unsupported authentication method : %s \n", authentication_method.c_str());
+       return false;
+   }
+   
+   if(rc != SSH_OK)
+   {
+       fprintf(_log_file, "authentication error : %s \n", ssh_get_error( session ));
        return false;
    }
 
@@ -117,7 +225,7 @@ int FSmanager::password_authentication(ssh_session session)
     rc = ssh_userauth_password( session, NULL, password);
     if(rc == SSH_AUTH_ERROR)
     {
-        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(session));
+        fprintf(_log_file, "Authentication failed: %s \n", ssh_get_error(session));
         exit(-1);
     }
 
@@ -132,7 +240,7 @@ int FSmanager::public_key_authentication(ssh_session session)
     rc = ssh_userauth_publickey_auto( session, NULL, NULL);
     if(rc == SSH_AUTH_ERROR)
     {
-        fprintf(stderr, "Authentication failed: %s \n", ssh_get_error(session));
+        fprintf(_log_file, "Authentication failed: %s \n", ssh_get_error(session));
         exit(-1);
     }
 
@@ -145,7 +253,7 @@ void FSmanager::remote_command(ssh_session session, const char* command)
     int remote_success = this->send_remote_command(session, command);
     if(remote_success != SSH_OK)
     {
-        fprintf(stderr, "Error in send_remote_command : %s \n", ssh_get_error( session ));
+        fprintf(_log_file, "Error in send_remote_command : %s \n", ssh_get_error( session ));
         exit(-1);
     }
 }
@@ -159,13 +267,17 @@ int FSmanager::send_remote_command(ssh_session session, const char* command)
     int nbytes;
     channel = ssh_channel_new(session);
     if (channel == NULL)
+    {
         return SSH_ERROR;
+    }
+
     rc = ssh_channel_open_session(channel);
     if (rc != SSH_OK)
     {
         ssh_channel_free(channel);
         return rc;
     }
+
     rc = ssh_channel_request_exec(channel, command);
     if (rc != SSH_OK)
     {
@@ -173,7 +285,9 @@ int FSmanager::send_remote_command(ssh_session session, const char* command)
         ssh_channel_free(channel);
         return rc;
     }
+
     nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+
     while (nbytes > 0)
     {
         if (write(1, buffer, nbytes) != (unsigned int) nbytes)

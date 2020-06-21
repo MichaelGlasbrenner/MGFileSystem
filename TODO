@@ -1,3 +1,8 @@
+- as an alternative to making a hand-shake between client and fsmanager; the client could also mount
+  directly the directory on the storage node; during mount, alternative storage nodes should also be specified;
+  if an error/exception occurs, the program should switch to the next storage node on the list...
+  (drawback: load balancing not satisfied)
+
 distributed filesystem:
 - file writes are accompanied by an rsync to the secondary storage nodes 
   or alternatively synchronization is done by unison
@@ -25,6 +30,8 @@ one should not be able to copy file of a different user such as root
 adjust tests also for ssh-backend
 
 implement truncate for ssh-backend
+
+no error, if public key authentication is chosen, but keys are not installed !?
 
 ------------------------------------
 

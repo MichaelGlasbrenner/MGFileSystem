@@ -14,6 +14,7 @@ using namespace std; // FIXME
 
 #define DAEMON_NAME "FSmanager"
 
+// #define daemonize // FIXME
 
 
 void process(){
@@ -29,6 +30,7 @@ int main(int argc, char *argv[]) {
 
     syslog(LOG_INFO, "Entering Daemon");
 
+#ifdef daemonize
     pid_t pid, sid;
 
    //Fork the Parent Process
@@ -54,15 +56,20 @@ int main(int argc, char *argv[]) {
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
+#endif
 
     // create FSmanager object
-    FSmanager fsmanager();
+    FSmanager fsmanager;
 
     //----------------
     //Main Process
     //----------------
     while(true){
         process();    //Run our Process
+
+        fsmanager.check_storage_nodes();
+        fsmanager.check_client_nodes();
+
         sleep(60);    //Sleep for 60 seconds
     }
 

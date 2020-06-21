@@ -59,13 +59,14 @@ class  FSmanager
        int  password_authentication(ssh_session session);
        int  public_key_authentication(ssh_session session);
        void remote_command(ssh_session session, const char* command);
+       void print_status();
 
    private:
        std::vector<client_node> _client_nodes;
        std::vector<storage_node> _storage_nodes;
 
-       std::vector<ssh_session*> _storage_sessions;
-       std::vector<ssh_session*> _client_sessions;
+       std::vector<ssh_session> _storage_sessions;
+       std::vector<ssh_session> _client_sessions;
 
        FILE* _log_file;
 };
