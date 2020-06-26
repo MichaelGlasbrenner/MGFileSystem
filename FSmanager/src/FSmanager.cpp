@@ -76,16 +76,21 @@ void FSmanager::check_storage_nodes()
 {
      std::string fs_path = "/root/local_filesystem"; // FIXME
     
+         fprintf(_log_file, "been here1 \n");
+         fflush(_log_file);
      for(size_t i=0; i < _storage_nodes.size(); ++i)
      {
           auto& node = _storage_nodes[i];
           ssh_session session = _storage_sessions[i]; 
 
-         std::string command = "ls -ltr " + fs_path;
+         //std::string command = "ls -ltr " + fs_path;
+         std::string command = "if [ -d \"" + fs_path + "\" ]; then echo \"0\"; else echo \"1\"; fi ";
          ssh_channel channel;
          int rc;
          char buffer[256];
          int nbytes;
+         fprintf(_log_file, "been here2 \n");
+         fflush(_log_file);
 
          channel = ssh_channel_new(session);
          if (channel == NULL)
@@ -94,6 +99,8 @@ void FSmanager::check_storage_nodes()
              node._responsive = false;
              continue;
          }
+         fprintf(_log_file, "been here3 \n");
+         fflush(_log_file);
 
          rc = ssh_channel_open_session(channel);
          if (rc != SSH_OK)
@@ -103,6 +110,8 @@ void FSmanager::check_storage_nodes()
              node._responsive = false;
              continue;
          }
+         fprintf(_log_file, "been here4 \n");
+         fflush(_log_file);
 
          rc = ssh_channel_request_exec(channel, command.c_str());
          if (rc != SSH_OK)
@@ -114,6 +123,8 @@ void FSmanager::check_storage_nodes()
              node._responsive = false;
              continue;
          }
+         fprintf(_log_file, "been here5 \n");
+         fflush(_log_file);
 
          nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
 
@@ -129,7 +140,10 @@ void FSmanager::check_storage_nodes()
                  continue;
              }
              nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+             fprintf(_log_file, "been here6 \n");
+             fflush(_log_file);
          }
+
          if (nbytes < 0)
          {
              ssh_channel_close(channel);
@@ -140,16 +154,33 @@ void FSmanager::check_storage_nodes()
              continue;
          }
 
-         fprintf(_log_file, "buffer : %s \n", buffer);
+         fprintf(_log_file, "been here7 \n");
+         fflush(_log_file);
+
+         fprintf(_log_file, "buffer : %d \n", (int)buffer[0]);
+
+         if(buffer[0] == '0') // -> directory exists on the node
+         {
+             node._reachable = true;
+             node._responsive = true;
+         }
+         else if(buffer[0] == '1') // -> directory does not exists, but node responds
+         {
+             node._reachable = false;
+             node._responsive = false;
+         }
+
+         fflush(_log_file);
 
          ssh_channel_send_eof(channel);
          ssh_channel_close(channel);
          ssh_channel_free(channel);
 
-         node._reachable = false;
-         node._responsive = false;
-         continue;
+         // FIXME : check also if unison is running
+         // with a command like this: (return 0 or 1)
+         // systemctl is-active --quiet sshd
      }
+
 
      this->print_status();
 }
@@ -167,7 +198,7 @@ void FSmanager::print_status()
 
     for(auto& node : _storage_nodes)
     {
-        fprintf(_log_file, "%s %s %s \n", node._ip, (node._reachable ? "true" : "false"), (node._responsive ? "true" : "false"));
+        fprintf(_log_file, "%s %s %s \n", node._ip.c_str(), (node._reachable ? "true" : "false"), (node._responsive ? "true" : "false"));
     }
 }
 

@@ -14,7 +14,8 @@ class client_node
        client_node(std::string ip) :
            _ip(ip),
            _reachable(false),
-           _responsive(false)
+           _responsive(false),
+           _fs_mounted(false)
        {
 
        }
@@ -23,6 +24,7 @@ class client_node
        std::string _ip;
        bool _reachable;
        bool _responsive;
+       bool _fs_mounted;
 };
 
 
@@ -32,7 +34,8 @@ class storage_node
         storage_node(std::string ip) :
             _ip(ip),
             _reachable(false),
-            _responsive(false)
+            _responsive(false),
+            _fs_available(false)
         {
 
         }
@@ -41,6 +44,7 @@ class storage_node
        std::string _ip;
        bool _reachable;
        bool _responsive;
+       bool _fs_available;
 };
 
 

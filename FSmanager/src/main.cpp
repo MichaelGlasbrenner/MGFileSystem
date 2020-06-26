@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         fsmanager.check_storage_nodes();
         fsmanager.check_client_nodes();
 
-        sleep(60);    //Sleep for 60 seconds
+        sleep(10);    //Sleep for 60 seconds
     }
 
     //Close the log
